@@ -62,11 +62,8 @@ class _PythonSTC(stc.StyledTextCtrl):
             if lineNo > 0:
                 prevLineWithIndent = self.GetLine(lineNo - 1)
                 prevLine = prevLineWithIndent.strip()
-                print len(prevLineWithIndent), len(prevLine)
                 indent = len(prevLineWithIndent) - 1 - len(prevLine)
-                print indent
                 self.indentLevel = indent / TABWIDTH
-                print self.indentLevel
                 for ind in indents:
                     if prevLine.startswith(ind) and prevLine.endswith(":"):
                         self.indentLevel += 1
