@@ -15,8 +15,14 @@ class MainWindow(wx.Frame):
         filemenu.AppendSeparator()
         filemenu.Append(wx.ID_EXIT, "E&xit", "exit")
 
+        evalMenu = wx.Menu()
+        evalMenu.Append(201, "Eval buffer")
+
+        self.Bind(wx.EVT_MENU, self.OnEvalBuffer, id=201)
+
         menuBar = wx.MenuBar()
         menuBar.Append(filemenu, "&File")
+        menuBar.Append(evalMenu, "E&val")
         self.SetMenuBar(menuBar)
 
         wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
@@ -25,42 +31,30 @@ class MainWindow(wx.Frame):
 
         self.Show(True)
 
-        if wx.Platform == '__WXMSW__':
-            faces = { 'times': 'Times New Roman',
-                      'mono' : 'Courier New',
-                      'helv' : 'Arial',
-                      'other': 'Comic Sans MS',
-                      'size' : 10,
-                      'size2': 8,
-                     }
-        else:
-            faces = { 'times': 'Times',
-                      'mono' : 'Courier',
-                      'helv' : 'Helvetica',
-                      'other': 'new century schoolbook',
-                      'size' : 12,
-                      'size2': 10,
-                     }
-
-
+        faces = {
+            'mono' : 'Consolas',
+            'size' : 12,
+            'size2' : 10,
+        }
+        
         # Global default styles for all languages
-        self.control.StyleSetSpec(wx.stc.STC_STYLE_DEFAULT,     "face:%(helv)s,size:%(size)d" % faces)
-        self.control.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER,  "back:#C0C0C0,face:%(helv)s,size:%(size2)d" % faces)
-        self.control.StyleSetSpec(wx.stc.STC_STYLE_CONTROLCHAR, "face:%(other)s" % faces)
+        self.control.StyleSetSpec(wx.stc.STC_STYLE_DEFAULT,     "face:%(mono)s,size:%(size)d" % faces)
+        self.control.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER,  "back:#C0C0C0,face:%(mono)s,size:%(size2)d" % faces)
+        self.control.StyleSetSpec(wx.stc.STC_STYLE_CONTROLCHAR, "face:%(mono)s" % faces)
         self.control.StyleSetSpec(wx.stc.STC_STYLE_BRACELIGHT,  "fore:#FFFFFF,back:#0000FF,bold")
         self.control.StyleSetSpec(wx.stc.STC_STYLE_BRACEBAD,    "fore:#000000,back:#FF0000,bold")
 
         # Python styles
         # White space
-        self.control.StyleSetSpec(wx.stc.STC_P_DEFAULT, "fore:#808080,face:%(helv)s,size:%(size)d" % faces)
+        self.control.StyleSetSpec(wx.stc.STC_P_DEFAULT, "fore:#808080,face:%(mono)s,size:%(size)d" % faces)
         # Comment
-        self.control.StyleSetSpec(wx.stc.STC_P_COMMENTLINE, "fore:#007F00,face:%(other)s,size:%(size)d" % faces)
+        self.control.StyleSetSpec(wx.stc.STC_P_COMMENTLINE, "fore:#007F00,face:%(mono)s,size:%(size)d" % faces)
         # Number
         self.control.StyleSetSpec(wx.stc.STC_P_NUMBER, "fore:#007F7F,size:%(size)d" % faces)
         # String
-        self.control.StyleSetSpec(wx.stc.STC_P_STRING, "fore:#7F007F,italic,face:%(times)s,size:%(size)d" % faces)
+        self.control.StyleSetSpec(wx.stc.STC_P_STRING, "fore:#7F007F,italic,face:%(mono)s,size:%(size)d" % faces)
         # Single quoted string
-        self.control.StyleSetSpec(wx.stc.STC_P_CHARACTER, "fore:#7F007F,italic,face:%(times)s,size:%(size)d" % faces)
+        self.control.StyleSetSpec(wx.stc.STC_P_CHARACTER, "fore:#7F007F,italic,face:%(mono)s,size:%(size)d" % faces)
         # Keyword
         self.control.StyleSetSpec(wx.stc.STC_P_WORD, "fore:#00007F,bold,size:%(size)d" % faces)
         # Triple quotes
@@ -74,13 +68,13 @@ class MainWindow(wx.Frame):
         # Operators
         self.control.StyleSetSpec(wx.stc.STC_P_OPERATOR, "bold,size:%(size)d" % faces)
         # Identifiers
-        self.control.StyleSetSpec(wx.stc.STC_P_IDENTIFIER, "fore:#808080,face:%(helv)s,size:%(size)d" % faces)
+        self.control.StyleSetSpec(wx.stc.STC_P_IDENTIFIER, "fore:#808080,face:%(mono)s,size:%(size)d" % faces)
         # Comment-blocks
         self.control.StyleSetSpec(wx.stc.STC_P_COMMENTBLOCK, "fore:#7F7F7F,size:%(size)d" % faces)
         # End of line where string is not closed
         self.control.StyleSetSpec(wx.stc.STC_P_STRINGEOL, "fore:#000000,face:%(mono)s,back:#E0C0E0,eol,size:%(size)d" % faces)
 
-        self.control.SetViewWhiteSpace(wx.stc.STC_WS_VISIBLEAFTERINDENT)
+        #self.control.SetViewWhiteSpace(wx.stc.STC_WS_VISIBLEAFTERINDENT)
 
     def OnAbout(self, e):
         d = wx.MessageDialog(self, "sample editor", 'about', wx.OK)
@@ -102,6 +96,11 @@ class MainWindow(wx.Frame):
             self.control.SetLexer(wx.stc.STC_LEX_PYTHON)
             f.close()
         dlg.Destroy()
+
+    def OnEvalBuffer(self, e):
+        text = self.control.GetTextRaw()
+        context = {'WIXED': self, 'wx': wx}
+        exec(text.replace('\r\n', '\n'), context)
 
 
 app = wx.PySimpleApp()
