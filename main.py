@@ -8,9 +8,9 @@ from wixed import Buffer
 
 class MainWindow(wx.Frame):
     def __init__(self, parent, id):
-        self.buffers = [Buffer('Untitled buffer')]
+        self.buffers = [Buffer('Untitled buffer'), Buffer('another buffer')]
         self._currentBufferIndex = 0
-        wx.Frame.__init__(self, parent, id, self.currentBuffer.name, size=(400, 400))
+        wx.Frame.__init__(self, parent, id, self.currentBuffer.name, size=(800, 600))
         self.control = PythonSTC(self, 1)
         self.control.SetValue(self.currentBuffer.text)
         self.CreateStatusBar()
@@ -23,9 +23,20 @@ class MainWindow(wx.Frame):
 
     def OnPreviousBuffer(self, _):
         self._currentBufferIndex -= 1
+        if self._currentBufferIndex < 0:
+            self._currentBufferIndex = len(self.buffers) - 1
+        self.CurrentBufferChanged()
 
     def OnNextBuffer(self, _):
         self._currentBufferIndex += 1
+        if self._currentBufferIndex >= len(self.buffers):
+            self._currentBufferIndex = 0
+        self.CurrentBufferChanged()
+
+    def CurrentBufferChanged(self):
+        self.Title = self.currentBuffer.name
+        self.control.SetValue(self.currentBuffer.text)
+
 
     def CreateMenu(self):
         filemenu = wx.Menu()
