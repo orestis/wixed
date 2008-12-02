@@ -4,12 +4,30 @@ import wx.stc as stc
 from PythonCtrl import PythonSTC
 import keyword
 
-class MainWindow(wx.Frame):
-    def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title, size=(400, 400))
-        self.control = PythonSTC(self, 1)
-        self.CreateStatusBar()
+from wixed import Buffer
 
+class MainWindow(wx.Frame):
+    def __init__(self, parent, id):
+        self.buffers = [Buffer('Untitled buffer')]
+        self._currentBufferIndex = 0
+        wx.Frame.__init__(self, parent, id, self.currentBuffer.name, size=(400, 400))
+        self.control = PythonSTC(self, 1)
+        self.control.SetValue(self.currentBuffer.text)
+        self.CreateStatusBar()
+        self.CreateMenu()
+        self.Show(True)
+
+    @property
+    def currentBuffer(self):
+        return self.buffers[self._currentBufferIndex]
+
+    def OnPreviousBuffer(self, _):
+        self._currentBufferIndex -= 1
+
+    def OnNextBuffer(self, _):
+        self._currentBufferIndex += 1
+
+    def CreateMenu(self):
         filemenu = wx.Menu()
         filemenu.Append(wx.ID_OPEN, "&Open", "Open file...")
         filemenu.AppendSeparator()
@@ -17,23 +35,25 @@ class MainWindow(wx.Frame):
         filemenu.AppendSeparator()
         filemenu.Append(wx.ID_EXIT, "E&xit", "exit")
 
-        evalMenu = wx.Menu()
-        evalMenu.Append(201, "Eval buffer")
-
-        self.Bind(wx.EVT_MENU, self.OnEvalBuffer, id=201)
-
-        menuBar = wx.MenuBar()
-        menuBar.Append(filemenu, "&File")
-        menuBar.Append(evalMenu, "E&val")
-        self.SetMenuBar(menuBar)
-
         wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
         wx.EVT_MENU(self, wx.ID_EXIT, self.OnExit)
         wx.EVT_MENU(self, wx.ID_OPEN, self.OnOpen)
 
-        self.Show(True)
+        evalMenu = wx.Menu()
+        evalMenu.Append(201, "Eval buffer")
+        self.Bind(wx.EVT_MENU, self.OnEvalBuffer, id=201)
 
+        bufferMenu = wx.Menu()
+        bufferMenu.Append(301, "&Next buffer")
+        bufferMenu.Append(302, "&Previous buffer")
+        self.Bind(wx.EVT_MENU, self.OnNextBuffer, id=301)
+        self.Bind(wx.EVT_MENU, self.OnPreviousBuffer, id=302)
 
+        menuBar = wx.MenuBar()
+        menuBar.Append(filemenu, "&File")
+        menuBar.Append(evalMenu, "E&val")
+        menuBar.Append(bufferMenu, "&Buffers")
+        self.SetMenuBar(menuBar)
 
     def OnAbout(self, e):
         d = wx.MessageDialog(self, "sample editor", 'about', wx.OK)
@@ -62,6 +82,6 @@ class MainWindow(wx.Frame):
 
 
 app = wx.PySimpleApp()
-frame = MainWindow(None, wx.ID_ANY, "Small editor")
+frame = MainWindow(None, wx.ID_ANY)
 
 app.MainLoop()
