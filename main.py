@@ -11,8 +11,7 @@ class MainWindow(wx.Frame):
         self.buffers = [Buffer('Untitled buffer'), Buffer('another buffer')]
         self._currentBufferIndex = 0
         wx.Frame.__init__(self, parent, id, self.currentBuffer.name, size=(800, 600))
-        self.control = PythonSTC(self, 1)
-        self.control.SetValue(self.currentBuffer.text)
+        self.control = PythonSTC(self , self.currentBuffer)
         self.CreateStatusBar()
         self.CreateMenu()
         self.Show(True)
@@ -35,7 +34,7 @@ class MainWindow(wx.Frame):
 
     def CurrentBufferChanged(self):
         self.Title = self.currentBuffer.name
-        self.control.SetValue(self.currentBuffer.text)
+        self.control.buffer = self.currentBuffer
 
 
     def CreateMenu(self):

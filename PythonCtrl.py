@@ -77,8 +77,6 @@ class _PythonSTC(stc.StyledTextCtrl):
                 self.AddText(' ' * self.indentLevel * TABWIDTH)
                 
 
-
-
     def OnKeyPressed(self, event):
         if self.CallTipActive():
             self.CallTipCancel()
@@ -248,9 +246,19 @@ class _PythonSTC(stc.StyledTextCtrl):
 
 
 class PythonSTC(_PythonSTC):
-    def __init__(self, parent, style=wx.BORDER_NONE):
+    def __init__(self, parent, thebuffer, style=wx.BORDER_NONE):
         _PythonSTC.__init__(self, parent, -1, style=style)
         self.SetUpEditor()
+        self._buffer = thebuffer
+        self.SetValue(self._buffer.text)
+        
+
+    def __set_buffer(self, newbuffer):
+        self.SyncToBuffer()
+        self._buffer = newbuffer
+        self.SyncFromBuffer()
+
+    buffer = property(lambda self: self._buffer, __set_buffer)
 
     # Some methods to make it compatible with how the wxTextCtrl is used
     def SetValue(self, value):
@@ -262,6 +270,20 @@ class PythonSTC(_PythonSTC):
         self.EmptyUndoBuffer()
         self.SetSavePoint()
         self.SetReadOnly(val)
+
+    def SyncFromBuffer(self):
+        self.SetValue(self.buffer.text)
+        self.SetCurrentPos(self.buffer.curpos)
+        self.SetAnchor(self.buffer.anchor)
+
+    def SyncToBuffer(self):
+        self.buffer.text = self.GetText()
+        self.buffer.curpos = self.GetCurrentPos()
+        self.buffer.anchor = self.GetAnchor()
+
+    def OnKeyPressed(self, event):
+        _PythonSTC.OnKeyPressed(self, event)
+        self.SyncToBuffer()
 
     def SetEditable(self, val):
         self.SetReadOnly(not val)
