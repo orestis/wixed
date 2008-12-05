@@ -64,6 +64,7 @@ class MainWindow(wx.Frame):
         menuBar.Append(evalMenu, "E&val")
         menuBar.Append(bufferMenu, "&Buffers")
         self.SetMenuBar(menuBar)
+        self.context = {'WIXED': self, 'wx': wx}
 
     def OnAbout(self, e):
         d = wx.MessageDialog(self, "sample editor", 'about', wx.OK)
@@ -87,8 +88,7 @@ class MainWindow(wx.Frame):
 
     def OnEvalBuffer(self, e):
         text = self.control.GetTextRaw()
-        context = {'WIXED': self, 'wx': wx}
-        exec(text.replace('\r\n', '\n'), context)
+        exec(text.replace('\r\n', '\n'), self.context)
 
 
 app = wx.PySimpleApp()
