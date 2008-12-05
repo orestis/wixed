@@ -6,14 +6,28 @@ import keyword
 
 from wixed import Buffer
 
+ID_MAINPANEL = wx.NewId()
+
 class MainWindow(wx.Frame):
     def __init__(self, parent, id):
+        wx.Frame.__init__(self, parent, id, 'title', size=(800, 600))
         self.buffers = [Buffer('Untitled buffer'), Buffer('another buffer')]
         self._currentBufferIndex = 0
-        wx.Frame.__init__(self, parent, id, self.currentBuffer.name, size=(800, 600))
-        self.control = PythonSTC(self , self.currentBuffer)
+        self.mainPanel = wx.Panel(self, wx.ID_ANY)
+        self.mainPanel.SetBackgroundColour(wx.RED)
+        self.editor = PythonSTC(self.mainPanel , self.currentBuffer)
+        self.commandLine = wx.TextCtrl(self.mainPanel, wx.ID_ANY, size=(125, -1))
+        box = wx.BoxSizer(wx.VERTICAL)
+        box.Add(self.editor, 1, wx.EXPAND)
+        box.Add(self.commandLine, 0, wx.EXPAND)
+
+        self.mainPanel.SetSizer(box)
+        self.mainPanel.SetAutoLayout(True)
+
         self.CreateStatusBar()
         self.CreateMenu()
+
+        self.CurrentBufferChanged()
         self.Show(True)
 
     @property
@@ -34,7 +48,7 @@ class MainWindow(wx.Frame):
 
     def CurrentBufferChanged(self):
         self.Title = self.currentBuffer.name
-        self.control.buffer = self.currentBuffer
+        self.editor.buffer = self.currentBuffer
 
 
     def CreateMenu(self):
@@ -82,12 +96,12 @@ class MainWindow(wx.Frame):
             self.filename = dlg.GetFilename()
             self.dirname = dlg.GetDirectory()
             f = open(os.path.join(self.dirname, self.filename), 'r')
-            self.control.SetTextRaw(f.read())
+            self.editor.SetTextRaw(f.read())
             f.close()
         dlg.Destroy()
 
     def OnEvalBuffer(self, e):
-        text = self.control.GetTextRaw()
+        text = self.editor.GetTextRaw()
         exec(text.replace('\r\n', '\n'), self.context)
 
 
