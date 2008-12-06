@@ -2,6 +2,7 @@ import subprocess
 import os
 import signal
 from threading import Thread
+import time
 
 
 class CircleList(list):
@@ -113,9 +114,10 @@ class Pipe(object):
 
     def do_piping(self):
         while True:
-            c = self.readStream.read(1)
+            c = self.readStream.read(100)
             if c == '':
                 break
             self.writeStream.write(c)
+            time.sleep(0.1)
 
 
