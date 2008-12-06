@@ -1,4 +1,6 @@
 import keyword
+import time
+from threading import Thread
 
 import wx
 import wx.stc as stc
@@ -40,7 +42,7 @@ class _PythonSTC(stc.StyledTextCtrl):
         self.SetEdgeMode(stc.STC_EDGE_LINE)
         self.SetEdgeColumn(78)
 
-        self.Bind(stc.EVT_STC_UPDATEUI, self.OnUpdateUI)
+        #self.Bind(stc.EVT_STC_UPDATEUI, self.OnUpdateUI)
         self.Bind(stc.EVT_STC_MARGINCLICK, self.OnMarginClick)
         self.Bind(stc.EVT_STC_CHARADDED, self.OnCharAdded)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyPressed)
@@ -250,15 +252,26 @@ class PythonSTC(_PythonSTC):
         _PythonSTC.__init__(self, parent, -1, style=style)
         self.SetUpEditor()
         self._buffer = thebuffer
-        self._buffer.updateFunc = self.SyncFromBuffer
         self.SetValue(self._buffer.text)
+        t = Thread(target=self.QueryBuffer)
+        t.start()
         
+
+    def QueryBuffer(self):
+        while True:
+            try:
+                if self.buffer.pending:
+                    self.SyncFromBuffer()
+                wx.YieldIfNeeded()
+                time.sleep(1.6)
+            except wx.PyDeadObjectError:
+                break
+
 
     def __set_buffer(self, newbuffer):
         self.SyncToBuffer()
-        self._buffer.updateFunc = lambda: None
         self._buffer = newbuffer
-        self._buffer.updateFunc = self.SyncFromBuffer
+        self.SetValue(self._buffer.text)
         self.SyncFromBuffer()
 
     buffer = property(lambda self: self._buffer, __set_buffer)
@@ -275,12 +288,14 @@ class PythonSTC(_PythonSTC):
         self.SetReadOnly(val)
 
     def SyncFromBuffer(self):
-        self.SetValue(self.buffer.text)
-        self.SetCurrentPos(self.buffer.curpos)
+        self.AppendTextRaw(''.join(self.buffer.pending))
+        self.buffer.synced()
         self.SetAnchor(self.buffer.anchor)
+        self.GotoPos(self.buffer.curpos)
 
     def SyncToBuffer(self):
         self.buffer.text = self.GetText()
+        self.buffer.synced()
         self.buffer.curpos = self.GetCurrentPos()
         self.buffer.anchor = self.GetAnchor()
 
@@ -335,7 +350,7 @@ class PythonSTC(_PythonSTC):
         self.SetKeyWords(0, " ".join(keyword.kwlist))
 
         # Enable folding
-        self.SetProperty("fold", "1" ) 
+        self.SetProperty("fold", "1" )
 
         # Highlight tab/space mixing (shouldn't be any)
         self.SetProperty("tab.timmy.whinge.level", "1")
