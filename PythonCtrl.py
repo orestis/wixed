@@ -250,12 +250,15 @@ class PythonSTC(_PythonSTC):
         _PythonSTC.__init__(self, parent, -1, style=style)
         self.SetUpEditor()
         self._buffer = thebuffer
+        self._buffer.updateFunc = self.SyncFromBuffer
         self.SetValue(self._buffer.text)
         
 
     def __set_buffer(self, newbuffer):
         self.SyncToBuffer()
+        self._buffer.updateFunc = lambda: None
         self._buffer = newbuffer
+        self._buffer.updateFunc = self.SyncFromBuffer
         self.SyncFromBuffer()
 
     buffer = property(lambda self: self._buffer, __set_buffer)

@@ -17,11 +17,15 @@ class MainWindow(wx.Frame):
         self.mainPanel = wx.Panel(self, wx.ID_ANY)
         self.mainPanel.SetBackgroundColour(wx.RED)
         self.editor = PythonSTC(self.mainPanel , self.currentBuffer)
-        self.context = {'STC': self.editor, 'BUFFERS': self.buffers, 'CURR_INDEX': self._currentBufferIndex, 'wx': wx}
+        self.context = {
+            'STC': self.editor, 'BUFFERS': self.buffers,
+            'CURR_INDEX': self._currentBufferIndex, 'wx': wx,
+            'B': self.currentBuffer
+        }
         self.commandLine = CommandLineControl(self.mainPanel, wx.ID_ANY, size=(125, -1), context=self.context)
         box = wx.BoxSizer(wx.VERTICAL)
-        box.Add(self.editor, 1, wx.EXPAND)
-        box.Add(self.commandLine, 0, wx.EXPAND)
+        box.Add(self.editor, proportion=1, flag=wx.EXPAND)
+        box.Add(self.commandLine, proportion=0, flag=wx.EXPAND)
 
         self.mainPanel.SetSizer(box)
         self.mainPanel.SetAutoLayout(True)
@@ -51,6 +55,8 @@ class MainWindow(wx.Frame):
     def CurrentBufferChanged(self):
         self.Title = self.currentBuffer.name
         self.editor.buffer = self.currentBuffer
+        self.context['CURR_INDEX'] = self._currentBufferIndex
+        self.context['B'] = self.currentBuffer
 
 
     def CreateMenu(self):
