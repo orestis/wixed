@@ -1,3 +1,8 @@
+import subprocess
+import os
+import signal
+from threading import Thread
+
 
 class CircleList(list):
     index = None
@@ -83,3 +88,34 @@ class BufferManager(object):
     def previous(self):
         self._buffers.previous()
         self.updateFunc()
+
+
+class Process(object):
+    def __init__(self, *args, **kwargs):
+        self._buffer = kwargs.pop('buffer')
+        kwargs['stdout'] = subprocess.PIPE
+        #kwargs['stdin'] = subprocess.PIPE
+        kwargs['stderr'] = subprocess.STDOUT
+        #kwargs['bufsize'] = 0 #unbuffered
+        self.popen = subprocess.Popen(*args, **kwargs)
+        Pipe(self.popen.stdout, self._buffer)
+
+    def kill(self):
+        os.kill(self.popen.pid, signal.SIGKILL)
+        
+
+class Pipe(object):
+    def __init__(self, readStream, writeStream):
+        self.readStream = readStream
+        self.writeStream = writeStream
+        t = Thread(target=self.do_piping)
+        t.start()
+
+    def do_piping(self):
+        while True:
+            c = self.readStream.read(1)
+            if c == '':
+                break
+            self.writeStream.write(c)
+
+
