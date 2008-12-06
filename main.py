@@ -2,6 +2,7 @@ import wx
 import os
 import wx.stc as stc
 from PythonCtrl import PythonSTC
+from commandline import CommandLineControl
 import keyword
 
 from wixed import Buffer
@@ -16,7 +17,8 @@ class MainWindow(wx.Frame):
         self.mainPanel = wx.Panel(self, wx.ID_ANY)
         self.mainPanel.SetBackgroundColour(wx.RED)
         self.editor = PythonSTC(self.mainPanel , self.currentBuffer)
-        self.commandLine = wx.TextCtrl(self.mainPanel, wx.ID_ANY, size=(125, -1))
+        self.context = {'STC': self.editor, 'BUFFERS': self.buffers, 'CURR_INDEX': self._currentBufferIndex, 'wx': wx}
+        self.commandLine = CommandLineControl(self.mainPanel, wx.ID_ANY, size=(125, -1), context=self.context)
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(self.editor, 1, wx.EXPAND)
         box.Add(self.commandLine, 0, wx.EXPAND)
@@ -78,7 +80,6 @@ class MainWindow(wx.Frame):
         menuBar.Append(evalMenu, "E&val")
         menuBar.Append(bufferMenu, "&Buffers")
         self.SetMenuBar(menuBar)
-        self.context = {'WIXED': self, 'wx': wx}
 
     def OnAbout(self, e):
         d = wx.MessageDialog(self, "sample editor", 'about', wx.OK)
@@ -86,7 +87,6 @@ class MainWindow(wx.Frame):
         d.Destroy()
 
     def OnExit(self, e):
-        print 'exiting'
         self.Close(True)
 
     def OnOpen(self, e):

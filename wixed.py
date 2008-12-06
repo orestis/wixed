@@ -6,3 +6,7 @@ class Buffer(object):
         self.text = ''
         self.curpos = 0
         self.anchor = 0
+
+
+class BufferManager(object):
+    pass
