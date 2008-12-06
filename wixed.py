@@ -1,4 +1,30 @@
 
+class CircleList(list):
+    index = None
+
+    def append(self, v):
+        list.append(self, v)
+        if self.index is None:
+            self.index = 0
+
+    @property
+    def current(self):
+        if self.index is not None:
+            return self[self.index]
+
+    def next(self):
+        if self.index >= len(self) - 1: #end of list
+            self.index = 0
+        else:
+            self.index += 1
+
+    def previous(self):
+        if self.index <= 0: # start of list
+            self.index = len(self) - 1
+        else:
+            self.index -= 1
+
+
 
 def observed(prop):
     def _setter(self, newvalue):
@@ -22,12 +48,38 @@ class Buffer(object):
     curpos = property(*observed('_curpos'))
     anchor = property(*observed('_anchor'))
 
+    def write(self, v):
+        self.text += v
+
     def updated(self):
         self.updateFunc()
 
-    
+    def __repr__(self):
+        return 'Buffer <%r>' % self.name
 
 
 
 class BufferManager(object):
-    pass
+    def __init__(self):
+        self._buffers = CircleList()
+        self.updateFunc = lambda : None
+
+    def new(self, *args, **kwargs):
+        b = Buffer(*args, **kwargs)
+        self._buffers.append(b)
+        return b
+
+    def __repr__(self):
+        return 'BufferManager: <%r>' % self._buffers
+
+    @property
+    def current(self):
+        return self._buffers.current
+
+    def next(self):
+        self._buffers.next()
+        self.updateFunc()
+
+    def previous(self):
+        self._buffers.previous()
+        self.updateFunc()

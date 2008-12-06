@@ -1,40 +1,60 @@
+import time
+
+class HistoryList(list):
+    index = None
+    def append(self, v):
+        list.append(self, v)
+        self.reset()
+
+    @property
+    def current(self):
+        if self.index is not None:
+            return self[self.index]
+
+    def reset(self):
+        self.index = len(self)
+
+    def next(self):
+        if self.index >= len(self) - 1: #end of list
+            raise IndexError('end of list')
+        else:
+            self.index += 1
+
+    def previous(self):
+        if self.index <= 0: # start of list
+            raise IndexError('start of list')
+        else:
+            self.index -= 1
+
 
 class CommandLineHandler(object):
 
     def __init__(self):
         self.command = ''
-        self.history = []
-        self._index = 0
+        self.history = HistoryList()
 
     def line_changed(self, line):
         if callable(line):
             line = line()
         self.command = line
-        self._index = 0
+        self.history.reset()
 
-    def go_previous(self):
-        self._index -= 1
+    def previous(self):
         try:
-            if self._index < 0:
-                raise IndexError
-            self.command = self.history[self._index]
-        except IndexError:
-            self._index = 0 # no more, go to the first
+            self.history.previous()
+        finally:
+            self.command = self.history.current
 
-    def go_next(self):
-        self._index += 1
-        if self._index == 0 or self._index == len(self.history):
-            self.command = ''
-            self._index = len(self.history) - 1
-        else:
-            try:
-                self.command = self.history[self._index]
-            except IndexError:
-                self._index = len(self.history) - 1
+    def next(self):
+        try:
+            self.history.next()
+        finally:
+            self.command = self.history.current
 
     def execute(self, context):
+        if self.command == '':
+            return
         self.history.append(self.command)
-        self._index = len(self.history) - 1
         try:
             exec(self.command, context)
         except Exception, e:
@@ -45,9 +65,20 @@ import wx
 class CommandLineControl(wx.TextCtrl):
     def __init__(self, *args, **kwargs):
         self.context = kwargs.pop('context')
+        self.context['CMD'] = self
         wx.TextCtrl.__init__(self, *args, **kwargs)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.handler = CommandLineHandler()
+        style = self.DefaultStyle
+        font = style.GetFont()
+        font.SetFamily(wx.TELETYPE)
+        font.SetFaceName('Monaco')
+        font.SetPointSize(12)
+        style.SetFont(font)
+        self.SetDefaultStyle(style)
+
+    def Flash(self):
+        wx.Bell()
 
     def OnKeyDown(self, event):
         key = event.GetKeyCode()
@@ -55,14 +86,21 @@ class CommandLineControl(wx.TextCtrl):
             self.handler.execute(self.context)
             self.SetValue('')
         elif key == wx.WXK_DOWN:
-            wx.WXK_ESCAPE
-            self.handler.go_next()
-            self.SetValue(self.handler.command)
-            self.SetInsertionPoint(len(self.handler.command))
+            try:
+                self.handler.next()
+                self.SetValue(self.handler.command)
+                self.SetInsertionPoint(len(self.handler.command))
+            except IndexError:
+                self.handler.line_changed('')
+                self.SetValue('')
         elif key == wx.WXK_UP:
-            self.handler.go_previous()
+            try:
+                self.handler.previous()
+            except IndexError:
+                self.Flash()
             self.SetValue(self.handler.command)
             self.SetInsertionPoint(len(self.handler.command))
+
         elif key == wx.WXK_ESCAPE:
             self.handler.line_changed('')
             self.SetValue('')

@@ -1,27 +1,32 @@
-import wx
 import os
-import wx.stc as stc
-from PythonCtrl import PythonSTC
-from commandline import CommandLineControl
+import sys
 import keyword
 
-from wixed import Buffer
+import wx
+import wx.stc as stc
+
+from PythonCtrl import PythonSTC
+from commandline import CommandLineControl
+from wixed import BufferManager
 
 ID_MAINPANEL = wx.NewId()
 
 class MainWindow(wx.Frame):
     def __init__(self, parent, id):
         wx.Frame.__init__(self, parent, id, 'title', size=(800, 600))
-        self.buffers = [Buffer('Untitled buffer'), Buffer('another buffer')]
-        self._currentBufferIndex = 0
+        self.buffers = BufferManager()
+        self.buffers.updateFunc = self.CurrentBufferChanged
+        self.messages_buffer = self.buffers.new('* Messages *')
         self.mainPanel = wx.Panel(self, wx.ID_ANY)
         self.mainPanel.SetBackgroundColour(wx.RED)
-        self.editor = PythonSTC(self.mainPanel , self.currentBuffer)
+        self.editor = PythonSTC(self.mainPanel , self.messages_buffer)
         self.context = {
             'STC': self.editor, 'BUFFERS': self.buffers,
-            'CURR_INDEX': self._currentBufferIndex, 'wx': wx,
-            'B': self.currentBuffer
+            'wx': wx, 'B': self.buffers.current
         }
+        sys.stdout = self.messages_buffer
+        sys.stderr = self.messages_buffer
+
         self.commandLine = CommandLineControl(self.mainPanel, wx.ID_ANY, size=(125, -1), context=self.context)
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(self.editor, proportion=1, flag=wx.EXPAND)
@@ -36,27 +41,16 @@ class MainWindow(wx.Frame):
         self.CurrentBufferChanged()
         self.Show(True)
 
-    @property
-    def currentBuffer(self):
-        return self.buffers[self._currentBufferIndex]
-
     def OnPreviousBuffer(self, _):
-        self._currentBufferIndex -= 1
-        if self._currentBufferIndex < 0:
-            self._currentBufferIndex = len(self.buffers) - 1
-        self.CurrentBufferChanged()
+        self.buffers.previous()
 
     def OnNextBuffer(self, _):
-        self._currentBufferIndex += 1
-        if self._currentBufferIndex >= len(self.buffers):
-            self._currentBufferIndex = 0
-        self.CurrentBufferChanged()
+        self.buffers.next()
 
     def CurrentBufferChanged(self):
-        self.Title = self.currentBuffer.name
-        self.editor.buffer = self.currentBuffer
-        self.context['CURR_INDEX'] = self._currentBufferIndex
-        self.context['B'] = self.currentBuffer
+        self.Title = self.buffers.current.name
+        self.editor.buffer = self.buffers.current
+        self.context['B'] = self.buffers.current
 
 
     def CreateMenu(self):
