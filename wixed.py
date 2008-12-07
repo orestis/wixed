@@ -1,35 +1,8 @@
 import subprocess
 import os
 import signal
-from threading import Thread
-import time
 
-
-class CircleList(list):
-    index = None
-
-    def append(self, v):
-        list.append(self, v)
-        if self.index is None:
-            self.index = 0
-
-    @property
-    def current(self):
-        if self.index is not None:
-            return self[self.index]
-
-    def next(self):
-        if self.index >= len(self) - 1: #end of list
-            self.index = 0
-        else:
-            self.index += 1
-
-    def previous(self):
-        if self.index <= 0: # start of list
-            self.index = len(self) - 1
-        else:
-            self.index -= 1
-
+from utils import Pipe, CircleList
 
 
 class Buffer(object):
@@ -102,19 +75,4 @@ class Process(object):
     def kill(self):
         os.kill(self.popen.pid, signal.SIGKILL)
         
-
-class Pipe(object):
-    def __init__(self, readStream, writeStream):
-        self.readStream = readStream
-        self.writeStream = writeStream
-        t = Thread(target=self.do_piping)
-        t.start()
-
-    def do_piping(self):
-        while True:
-            c = self.readStream.read(10)
-            if c == '':
-                break
-            self.writeStream.write(c)
-
 

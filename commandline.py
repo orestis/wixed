@@ -1,31 +1,4 @@
-import time
-
-class HistoryList(list):
-    index = None
-    def append(self, v):
-        list.append(self, v)
-        self.reset()
-
-    @property
-    def current(self):
-        if self.index is not None:
-            return self[self.index]
-
-    def reset(self):
-        self.index = len(self)
-
-    def next(self):
-        if self.index >= len(self) - 1: #end of list
-            raise IndexError('end of list')
-        else:
-            self.index += 1
-
-    def previous(self):
-        if self.index <= 0: # start of list
-            raise IndexError('start of list')
-        else:
-            self.index -= 1
-
+from utils import HistoryList
 
 class CommandLineHandler(object):
 
@@ -69,6 +42,7 @@ class CommandLineControl(wx.TextCtrl):
         wx.TextCtrl.__init__(self, *args, **kwargs)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.handler = CommandLineHandler()
+        self.handler.line_changed('')
         style = self.DefaultStyle
         font = style.GetFont()
         font.SetFamily(wx.TELETYPE)
