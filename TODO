@@ -1,0 +1,4 @@
+ * Better buffer performance:
+   * if storing the text on a buffer is unusable, use the buffer as a proxy to scintilla.
+ * create a 'fundamental' STC with pluggable lexer
+ * use multiple views (start with a split window with two STCs and blepoume)
