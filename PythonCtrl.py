@@ -263,7 +263,7 @@ class PythonSTC(_PythonSTC):
                 if self.buffer.pending:
                     self.SyncFromBuffer()
                 wx.YieldIfNeeded()
-                time.sleep(1.6)
+                time.sleep(0.1)
             except wx.PyDeadObjectError:
                 break
 

@@ -1,4 +1,10 @@
  * Better buffer performance:
    * if storing the text on a buffer is unusable, use the buffer as a proxy to scintilla.
+   * Lock the buffer, you fool!
+   * use mmap - have to create tmp files for unnamed buffers, and do clever stuff when assigning to filenames
+   * it seems like dots were pathological when used with the python lexer.
+   * Take care to not fiddle with the buffer while it is colorized
+   * running chatty 3 times with 100000 chars segfaults - memory leak somewhere?
  * create a 'fundamental' STC with pluggable lexer
  * use multiple views (start with a split window with two STCs and blepoume)
+ * write the stdout to the console as well, for posterity

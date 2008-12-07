@@ -95,7 +95,7 @@ class Process(object):
         kwargs['stdout'] = subprocess.PIPE
         #kwargs['stdin'] = subprocess.PIPE
         kwargs['stderr'] = subprocess.STDOUT
-        #kwargs['bufsize'] = 0 #unbuffered
+        kwargs['bufsize'] = 0 #unbuffered
         self.popen = subprocess.Popen(*args, **kwargs)
         Pipe(self.popen.stdout, self._buffer)
 
@@ -112,10 +112,9 @@ class Pipe(object):
 
     def do_piping(self):
         while True:
-            c = self.readStream.read(100)
+            c = self.readStream.read(10)
             if c == '':
                 break
             self.writeStream.write(c)
-            time.sleep(0.1)
 
 
