@@ -261,8 +261,7 @@ class PythonSTC(_PythonSTC):
         while True:
             try:
                 if self.buffer.pending:
-                    self.SyncFromBuffer()
-                wx.YieldIfNeeded()
+                    wx.CallAfter(self.SyncFromBuffer)
                 time.sleep(0.1)
             except wx.PyDeadObjectError:
                 break
