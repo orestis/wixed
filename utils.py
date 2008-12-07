@@ -14,6 +14,21 @@ class Pipe(object):
                 break
             self.writeStream.write(c)
 
+class Tee(object):
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, v):
+        for s in self.streams:
+            s.write(v)
+
+    def flush(self):
+        for s in self.streams:
+            s.flush()
+
+    def close(self):
+        for s in self.streams:
+            s.close()
 
 class CircleList(list):
     index = None

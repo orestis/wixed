@@ -8,6 +8,7 @@ import wx.stc as stc
 from PythonCtrl import PythonSTC
 from commandline import CommandLineControl
 from wixed import BufferManager
+from utils import Tee
 
 ID_MAINPANEL = wx.NewId()
 
@@ -24,8 +25,10 @@ class MainWindow(wx.Frame):
             'STC': self.editor, 'BUFFERS': self.buffers,
             'wx': wx, 'B': self.buffers.current
         }
-        sys.stdout = self.messages_buffer
-        sys.stderr = self.messages_buffer
+        oldstdout = sys.stdout
+        oldstderr = sys.stderr
+        sys.stdout = Tee(oldstdout, self.messages_buffer)
+        sys.stderr = Tee(oldstderr, self.messages_buffer)
 
         self.commandLine = CommandLineControl(self.mainPanel, wx.ID_ANY, size=(125, -1), context=self.context)
         box = wx.BoxSizer(wx.VERTICAL)
@@ -40,6 +43,19 @@ class MainWindow(wx.Frame):
 
         self.CurrentBufferChanged()
         self.Show(True)
+        print >> self.messages_buffer, '# Hello!'
+        print >> self.messages_buffer, '# Use python in the command line below'
+        print >> self.messages_buffer, '# Output goes into this buffer (and in stdout, for post mortems!)'
+        print >> self.messages_buffer, '# B is the current buffer'
+        print >> self.messages_buffer
+        print >> self.messages_buffer, '# You can also eval this buffer'
+        print >> self.messages_buffer, '# Try this:'
+        print >> self.messages_buffer, 'print >> B, "\'Hello world!\'"'
+        print >> self.messages_buffer
+        print >> self.messages_buffer, '# Use BUFFERS.new(name) to create a new buffer'
+        print >> self.messages_buffer, '# import wixed and utils for handy stuff!'
+        print >> self.messages_buffer
+
 
     def OnPreviousBuffer(self, _):
         self.buffers.previous()

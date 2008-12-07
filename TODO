@@ -7,4 +7,4 @@
    * running chatty 3 times with 100000 chars segfaults - memory leak somewhere?
  * create a 'fundamental' STC with pluggable lexer
  * use multiple views (start with a split window with two STCs and blepoume)
- * write the stdout to the console as well, for posterity
+ * [DONE] write the stdout to the console as well, for posterity
