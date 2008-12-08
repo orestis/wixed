@@ -22,8 +22,8 @@ class Buffer(object):
     def write(self, v):
         self._text += v
         self.pending.append(v)
-        self.curpos += len(v)
-        self.anchor += len(v)
+        self.curpos = len(self._text)
+        self.anchor = len(self._text)
 
     def updated(self):
         self.updateFunc()
@@ -73,6 +73,10 @@ class Process(object):
         Pipe(self.popen.stdout, self._buffer)
 
     def kill(self):
-        os.kill(self.popen.pid, signal.SIGKILL)
+        try:
+            import win32api
+            win32api.TerminateProcess(int(self.popen._handle), -1)
+        except ImportError:
+            os.kill(self.popen.pid, signal.SIGKILL)
         
 
