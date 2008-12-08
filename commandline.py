@@ -40,14 +40,17 @@ class CommandLineControl(wx.TextCtrl):
         self.context = kwargs.pop('context')
         self.context['CMD'] = self
         style = kwargs.get('style', 0)
-        style |= wx.TE_PROCESS_ENTER | wx.TE_PROCESS_TAB | wx.TE_RICH2
+        style |= wx.TE_PROCESS_ENTER | wx.TE_PROCESS_TAB | wx.TE_RICH2 # TE_RICH2 for windows
         kwargs ['style'] = style
         wx.TextCtrl.__init__(self, *args, **kwargs)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.handler = CommandLineHandler()
         self.handler.line_changed('')
         style = self.DefaultStyle
-        font = wx.SystemSettings.GetFont(wx.SYS_ANSI_FIXED_FONT)
+        if wx.Platform == '__WXMSW__':
+            font = wx.SystemSettings.GetFont(wx.SYS_ANSI_FIXED_FONT)
+        else:
+            font = wx.Font(12, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
         style.SetFont(font)
         self.style = style
         self.SetDefaultStyle(style)
