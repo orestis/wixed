@@ -287,7 +287,7 @@ class PythonSTC(_PythonSTC):
         self.SetReadOnly(val)
 
     def SyncFromBuffer(self):
-        self.AppendTextRaw(''.join(self.buffer.pending))
+        self.AppendText(''.join(self.buffer.pending))
         self.buffer.synced()
         self.SetAnchor(self.buffer.anchor)
         self.GotoPos(self.buffer.curpos)

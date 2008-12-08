@@ -39,45 +39,50 @@ class CommandLineControl(wx.TextCtrl):
     def __init__(self, *args, **kwargs):
         self.context = kwargs.pop('context')
         self.context['CMD'] = self
+        style = kwargs.get('style', 0)
+        style |= wx.TE_PROCESS_ENTER | wx.TE_PROCESS_TAB | wx.TE_RICH2
+        kwargs ['style'] = style
         wx.TextCtrl.__init__(self, *args, **kwargs)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.handler = CommandLineHandler()
         self.handler.line_changed('')
         style = self.DefaultStyle
-        font = style.GetFont()
-        font.SetFamily(wx.TELETYPE)
-        font.SetFaceName('Monaco')
-        font.SetPointSize(12)
+        font = wx.SystemSettings.GetFont(wx.SYS_ANSI_FIXED_FONT)
         style.SetFont(font)
+        self.style = style
         self.SetDefaultStyle(style)
 
     def Flash(self):
         wx.Bell()
 
+    def ChangeValue(self, v):
+        wx.TextCtrl.ChangeValue(self, v)
+        self.SetStyle(0, len(v), self.style)
+
     def OnKeyDown(self, event):
         key = event.GetKeyCode()
         if key in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
             self.handler.execute(self.context)
-            self.SetValue('')
+            self.ChangeValue('')
         elif key == wx.WXK_DOWN:
             try:
                 self.handler.next()
-                self.SetValue(self.handler.command)
+                self.ChangeValue(self.handler.command)
                 self.SetInsertionPoint(len(self.handler.command))
             except IndexError:
                 self.handler.line_changed('')
-                self.SetValue('')
+                self.ChangeValue('')
         elif key == wx.WXK_UP:
             try:
                 self.handler.previous()
             except IndexError:
                 self.Flash()
-            self.SetValue(self.handler.command)
+            self.ChangeValue(self.handler.command)
             self.SetInsertionPoint(len(self.handler.command))
 
         elif key == wx.WXK_ESCAPE:
             self.handler.line_changed('')
-            self.SetValue('')
+            self.ChangeValue('')
         else:
             event.Skip()
             wx.CallAfter(self.handler.line_changed, self.GetValue)
