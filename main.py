@@ -18,12 +18,11 @@ class MainWindow(wx.Frame):
     def __init__(self, parent, id):
         wx.Frame.__init__(self, parent, id, 'title', size=(800, 600))
         self.buffers = BufferManager()
-        self.buffers.updateFunc = self.CurrentBufferChanged
         self.messages_buffer = self.buffers.new('* Messages *')
         scratch = self.buffers.new('* Scratch *')
         self.context = {
             'BUFFERS': self.buffers,
-            'wx': wx, 'B': self.buffers.current
+            'wx': wx
         }
 
         mainPanel = wx.Panel(self, wx.ID_ANY)
@@ -35,9 +34,12 @@ class MainWindow(wx.Frame):
         )
         self._nb= wx.aui.AuiNotebook(mainPanel, style=notebookstyle)
         self.windows = []
-        for b in self.buffers.buffers:
+        for b in self.buffers:
             ed = FundamentalEditor(self._nb, wx.NewId(), b)
             self._nb.AddPage(ed, b.name)
+
+        self.current_window_index = self._nb.Selection
+        self.CurrentBufferChanged(self.current_window.buffer)
 
         self.context['NB'] = self._nb
         self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
@@ -58,7 +60,6 @@ class MainWindow(wx.Frame):
         self.CreateStatusBar()
         self.CreateMenu()
 
-        self.CurrentBufferChanged()
         self.Show(True)
         print >> self.messages_buffer, '# Hello!'
         print >> self.messages_buffer, '# Use python in the command line below'
@@ -75,24 +76,30 @@ class MainWindow(wx.Frame):
 
         print >> scratch, '# use this buffer to scratch yourself'
 
+    @property
+    def current_window(self):
+        return self._nb.GetPage(self.current_window_index)
 
     def OnPageChanged(self, event):
-        old = event.GetOldSelection()
-        new = event.GetSelection()
         sel = self._nb.GetSelection()
-        print 'OnPageChanged,  old:%d, new:%d, sel:%d\n' % (old, new, sel)
+        self.current_window_index = sel
+        self.Title = self.current_window.buffer.name
+        self.context['B'] = self.current_window.buffer
         event.Skip()
 
     def OnPreviousBuffer(self, _):
-        self.buffers.previous()
+        newbuf = self.buffers.previous(frombuf=self.current_window.buffer)
+        self.CurrentBufferChanged(newbuf)
 
     def OnNextBuffer(self, _):
-        self.buffers.next()
+        newbuf = self.buffers.next(frombuf=self.current_window.buffer)
+        self.CurrentBufferChanged(newbuf)
 
-    def CurrentBufferChanged(self):
-        self.Title = self.buffers.current.name
-        #self.editor.buffer = self.buffers.current
-        self.context['B'] = self.buffers.current
+    def CurrentBufferChanged(self, newbuffer):
+        self.Title = newbuffer.name
+        self.current_window.buffer = newbuffer
+        self._nb.SetPageText(self.current_window_index, newbuffer.name)
+        self.context['B'] = self.current_window.buffer
 
 
     def CreateMenu(self):
@@ -143,7 +150,7 @@ class MainWindow(wx.Frame):
     #    dlg.Destroy()
 
     def OnEvalBuffer(self, e):
-        text = self.buffers.current.text
+        text = self.current_window.buffer.text
         exec(text.replace('\r\n', '\n'), self.context)
 
 

@@ -5,12 +5,19 @@ import signal
 from utils import Pipe, CircleList
 
 class Window(object):
-    def __init__(self, buffer, editor):
-        self.buffer = buffer
+    def __init__(self, buffer, editor, buf_idx):
+        self._buffer = buffer
         self.editor = editor
+
+    def __set_buffer(self, newbuffer):
+        self._buffer = newbuffer
+        self.editor.buffer = newbuffer
+
+    buffer = property(lambda self: self._buffer, __set_buffer)
 
     def __repr__(self):
         return 'Window <%r>' % self.buffer
+
 
 class Buffer(object):
     def __init__(self, name):
@@ -45,9 +52,9 @@ class Buffer(object):
 
 class BufferManager(object):
     def __init__(self):
-        self._buffers = CircleList()
-        self.updateFunc = lambda : None
+        self._buffers = []
         self._names_to_bufs = {}
+        self._bufs_to_indexes = {}
 
     @property
     def buffers(self):
@@ -56,6 +63,7 @@ class BufferManager(object):
     def new(self, *args, **kwargs):
         b = Buffer(*args, **kwargs)
         self._buffers.append(b)
+        self._bufs_to_indexes[b] = len(self._buffers) - 1
         self._names_to_bufs[b.name] = b
         return b
 
@@ -71,17 +79,17 @@ class BufferManager(object):
     def __repr__(self):
         return 'BufferManager: <%r>' % self._buffers
 
-    @property
-    def current(self):
-        return self._buffers.current
+    def next(self, frombuf):
+        fromidx = self._bufs_to_indexes[frombuf]
+        if fromidx >= len(self._buffers) - 1: # end of list
+            return self._buffers[0]
+        return self._buffers[fromidx + 1]
 
-    def next(self):
-        self._buffers.next()
-        self.updateFunc()
-
-    def previous(self):
-        self._buffers.previous()
-        self.updateFunc()
+    def previous(self, frombuf):
+        fromidx = self._bufs_to_indexes[frombuf]
+        if fromidx <= 0: # start of list
+            return self._buffers[-1]
+        return self._buffers[fromidx - 1]
 
 
 class Process(object):
