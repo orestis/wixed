@@ -446,8 +446,6 @@ class PythonSTC(_PythonSTC):
 
         # Caret color
         self.SetCaretForeground("BLUE")
-        # Selection background
-        self.SetSelBackground(1, '#66CCFF')
 
         self.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))

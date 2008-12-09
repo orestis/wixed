@@ -4,6 +4,13 @@ import signal
 
 from utils import Pipe, CircleList
 
+class Window(object):
+    def __init__(self, buffer, editor):
+        self.buffer = buffer
+        self.editor = editor
+
+    def __repr__(self):
+        return 'Window <%r>' % self.buffer
 
 class Buffer(object):
     def __init__(self, name):
@@ -40,11 +47,26 @@ class BufferManager(object):
     def __init__(self):
         self._buffers = CircleList()
         self.updateFunc = lambda : None
+        self._names_to_bufs = {}
+
+    @property
+    def buffers(self):
+        return self._buffers
 
     def new(self, *args, **kwargs):
         b = Buffer(*args, **kwargs)
         self._buffers.append(b)
+        self._names_to_bufs[b.name] = b
         return b
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._buffers[item]
+        else:
+            return self._names_to_bufs[item]
+
+    def __len__(self):
+        return len(self._buffers)
 
     def __repr__(self):
         return 'BufferManager: <%r>' % self._buffers

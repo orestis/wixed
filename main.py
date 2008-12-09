@@ -3,9 +3,11 @@ import sys
 import keyword
 
 import wx
+import wx.aui
 import wx.stc as stc
 
 from PythonCtrl import PythonSTC
+from editor import FundamentalEditor
 from commandline import CommandLineControl
 from wixed import BufferManager
 from utils import Tee
@@ -18,25 +20,40 @@ class MainWindow(wx.Frame):
         self.buffers = BufferManager()
         self.buffers.updateFunc = self.CurrentBufferChanged
         self.messages_buffer = self.buffers.new('* Messages *')
-        self.mainPanel = wx.Panel(self, wx.ID_ANY)
-        self.mainPanel.SetBackgroundColour(wx.RED)
-        self.editor = PythonSTC(self.mainPanel , self.messages_buffer)
+        scratch = self.buffers.new('* Scratch *')
         self.context = {
-            'STC': self.editor, 'BUFFERS': self.buffers,
+            'BUFFERS': self.buffers,
             'wx': wx, 'B': self.buffers.current
         }
+
+        mainPanel = wx.Panel(self, wx.ID_ANY)
+        mainPanel.SetBackgroundColour(wx.RED)
+
+        notebookstyle = (
+            wx.aui.AUI_NB_DEFAULT_STYLE | wx.aui.AUI_NB_TAB_EXTERNAL_MOVE
+            | wx.aui.AUI_NB_WINDOWLIST_BUTTON | wx.aui.AUI_NB_SCROLL_BUTTONS
+        )
+        self._nb= wx.aui.AuiNotebook(mainPanel, style=notebookstyle)
+        self.windows = []
+        for b in self.buffers.buffers:
+            ed = FundamentalEditor(self._nb, wx.NewId(), b)
+            self._nb.AddPage(ed, b.name)
+
+        self.context['NB'] = self._nb
+        self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
+
+        self.commandLine = CommandLineControl(mainPanel, wx.ID_ANY, size=(125, -1), context=self.context)
+        box = wx.BoxSizer(wx.VERTICAL)
+        box.Add(self._nb, proportion=1, flag=wx.EXPAND)
+        box.Add(self.commandLine, proportion=0, flag=wx.EXPAND)
+
+        mainPanel.SetSizer(box)
+        mainPanel.SetAutoLayout(True)
+
         oldstdout = sys.stdout
         oldstderr = sys.stderr
         sys.stdout = Tee(oldstdout, self.messages_buffer)
         sys.stderr = Tee(oldstderr, self.messages_buffer)
-
-        self.commandLine = CommandLineControl(self.mainPanel, wx.ID_ANY, size=(125, -1), context=self.context)
-        box = wx.BoxSizer(wx.VERTICAL)
-        box.Add(self.editor, proportion=1, flag=wx.EXPAND)
-        box.Add(self.commandLine, proportion=0, flag=wx.EXPAND)
-
-        self.mainPanel.SetSizer(box)
-        self.mainPanel.SetAutoLayout(True)
 
         self.CreateStatusBar()
         self.CreateMenu()
@@ -56,6 +73,15 @@ class MainWindow(wx.Frame):
         print >> self.messages_buffer, '# import wixed and utils for handy stuff!'
         print >> self.messages_buffer
 
+        print >> scratch, '# use this buffer to scratch yourself'
+
+
+    def OnPageChanged(self, event):
+        old = event.GetOldSelection()
+        new = event.GetSelection()
+        sel = self._nb.GetSelection()
+        print 'OnPageChanged,  old:%d, new:%d, sel:%d\n' % (old, new, sel)
+        event.Skip()
 
     def OnPreviousBuffer(self, _):
         self.buffers.previous()
@@ -65,7 +91,7 @@ class MainWindow(wx.Frame):
 
     def CurrentBufferChanged(self):
         self.Title = self.buffers.current.name
-        self.editor.buffer = self.buffers.current
+        #self.editor.buffer = self.buffers.current
         self.context['B'] = self.buffers.current
 
 
@@ -79,7 +105,7 @@ class MainWindow(wx.Frame):
 
         wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
         wx.EVT_MENU(self, wx.ID_EXIT, self.OnExit)
-        wx.EVT_MENU(self, wx.ID_OPEN, self.OnOpen)
+        #wx.EVT_MENU(self, wx.ID_OPEN, self.OnOpen)
 
         evalMenu = wx.Menu()
         evalMenu.Append(201, "Eval buffer")
@@ -105,19 +131,19 @@ class MainWindow(wx.Frame):
     def OnExit(self, e):
         self.Close(True)
 
-    def OnOpen(self, e):
-        self.dirname = ''
-        dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.py", wx.OPEN)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.filename = dlg.GetFilename()
-            self.dirname = dlg.GetDirectory()
-            f = open(os.path.join(self.dirname, self.filename), 'r')
-            self.editor.SetTextRaw(f.read())
-            f.close()
-        dlg.Destroy()
+    #def OnOpen(self, e):
+    #    self.dirname = ''
+    #    dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.py", wx.OPEN)
+    #    if dlg.ShowModal() == wx.ID_OK:
+    #        self.filename = dlg.GetFilename()
+    #        self.dirname = dlg.GetDirectory()
+    #        f = open(os.path.join(self.dirname, self.filename), 'r')
+    #        self.editor.SetTextRaw(f.read())
+    #        f.close()
+    #    dlg.Destroy()
 
     def OnEvalBuffer(self, e):
-        text = self.editor.GetTextRaw()
+        text = self.buffers.current.text
         exec(text.replace('\r\n', '\n'), self.context)
 
 
