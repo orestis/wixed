@@ -13,41 +13,31 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self._Setup()
 
         self._buffer = buffer
+        self._buffer.changed += self.SyncFromBuffer
         self.SetText(self._buffer.text)
-        t = Thread(target=self.QueryBuffer)
-        t.start()
+        self.Bind(stc.EVT_STC_UPDATEUI, self.SyncToBuffer)
         
     def __set_buffer(self, newbuffer):
         self.SyncToBuffer()
+        if self._buffer is not None:
+            self._buffer.changed -= self.SyncFromBuffer
         self._buffer = newbuffer
+        self._buffer.changed += self.SyncFromBuffer
         self.SetText(self._buffer.text)
         self.SyncFromBuffer()
 
     buffer = property(lambda self: self._buffer, __set_buffer)
 
-    def QueryBuffer(self):
-        while True:
-            try:
-                if self.buffer.pending:
-                    wx.CallAfter(self.SyncFromBuffer)
-                time.sleep(0.1)
-            except wx.PyDeadObjectError:
-                break
-
-
-    def SyncFromBuffer(self):
-        self.AppendText(''.join(self.buffer.pending))
-        self.buffer.synced()
-        self.SetAnchor(self.buffer.anchor)
+    def SyncFromBuffer(self, newtext=None):
+        if newtext is not None:
+            self.AppendText(newtext)
         self.GotoPos(self.buffer.curpos)
+        self.SetAnchor(self.buffer.anchor)
 
-    def SyncToBuffer(self):
+    def SyncToBuffer(self, evt=None):
         self.buffer.text = self.GetText()
-        self.buffer.synced()
-        self.buffer.curpos = self.GetCurrentPos()
-        self.buffer.anchor = self.GetAnchor()
-
-
+        self.buffer._curpos = self.GetCurrentPos()
+        self.buffer._anchor = self.GetAnchor()
 
 
     def _Setup(self):
@@ -103,6 +93,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
 
         # Caret color
         self.SetCaretForeground("BLUE")
+        self.SetSelBackground(1, '#66CCFF')
 
         self.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))

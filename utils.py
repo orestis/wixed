@@ -84,3 +84,31 @@ class HistoryList(list):
             self.index -= 1
 
 
+class EventHook(object):
+    def __init__(self):
+        self._observers = []
+
+    def __iadd__(self, other):
+        self._observers.append(other)
+        return self
+
+    def __isub__(self, other):
+        self._observers.remove(other)
+        return self
+
+    def fire(self, arg=None):
+        if arg is None:
+            for obs in self._observers:
+                obs()
+        else:
+            for obs in self._observers:
+                obs(arg)
+
+def observed(field, event_to_fire):
+    def setter(self, val):
+        setattr(self, field, val)
+        event_to_fire(self).fire()
+
+    def getter(self):
+        return getattr(self, field)
+    return property(getter, setter)

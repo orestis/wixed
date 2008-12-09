@@ -2,7 +2,7 @@ import subprocess
 import os
 import signal
 
-from utils import Pipe, CircleList
+from utils import Pipe, CircleList, EventHook, observed
 
 class Window(object):
     def __init__(self, buffer, editor, buf_idx):
@@ -18,32 +18,22 @@ class Window(object):
     def __repr__(self):
         return 'Window <%r>' % self.buffer
 
-
 class Buffer(object):
     def __init__(self, name):
         self.name = name
-        self._text = ''
-        self.curpos = 0
-        self.anchor = 0
-        self.pending = []
+        self.text = ''
+        self._curpos = 0
+        self._anchor = 0
+        self.changed = EventHook()
 
-    def __set_text(self, newtext):
-        self._text = newtext
-        self.synced()
-
-    text = property(lambda self: self._text, __set_text)
+    curpos = observed('_curpos', lambda s: s.changed)
+    anchor = observed('_anchor', lambda s: s.changed)
 
     def write(self, v):
-        self._text += v
-        self.pending.append(v)
-        self.curpos = len(self._text)
-        self.anchor = len(self._text)
-
-    def updated(self):
-        self.updateFunc()
-
-    def synced(self):
-        self.pending = []
+        self.text += v
+        self._curpos = len(self.text)
+        self._anchor = len(self.text)
+        self.changed.fire(v)
 
     def __repr__(self):
         return 'Buffer <%r>' % self.name
