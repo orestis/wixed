@@ -6,6 +6,18 @@ from wx import stc
 
 TABWIDTH = 4
 
+
+def GetModificationType(mask):
+    valid_masks = [m for m in dir(stc) if m.startswith('STC_MOD')
+        or m.startswith('STC_PERFORMED')
+        or m.startswith('STC_LASTSTEP')]
+
+    actual_masks = []
+    for m in valid_masks:
+        if getattr(stc, m) & mask:
+            actual_masks.append(m)
+    return actual_masks
+
 class FundamentalEditor(stc.StyledTextCtrl):
     def __init__(self, parent, ID, buffer):
         stc.StyledTextCtrl.__init__(self, parent, ID, style=wx.BORDER_NONE)
@@ -15,10 +27,23 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self._buffer = buffer
         self._buffer.changed += self.SyncFromBuffer
         self.SetText(self._buffer.text)
-        self.Bind(stc.EVT_STC_UPDATEUI, self.SyncToBuffer)
+        self.Bind(stc.EVT_STC_MODIFIED, self.OnModified)
+        self.Bind(stc.EVT_STC_UPDATEUI, self.UpdateUI)
+
+    def OnModified(self, event):
+            #print 'p', event.Position
+            #print 't', event.Text
+            #print 'l', event.Length
+            #print 'linesadded', event.LinesAdded
+        if (event.ModificationType & stc.STC_MOD_DELETETEXT or
+            event.ModificationType & stc.STC_MOD_INSERTTEXT):
+            self.buffer.text = self.GetText()
+
+    def UpdateUI(self, _):
+        self.buffer._curpos = self.GetCurrentPos()
+        self.buffer._anchor = self.GetAnchor()
         
     def __set_buffer(self, newbuffer):
-        self.SyncToBuffer()
         if self._buffer is not None:
             self._buffer.changed -= self.SyncFromBuffer
         self._buffer = newbuffer
@@ -33,11 +58,6 @@ class FundamentalEditor(stc.StyledTextCtrl):
             self.AppendText(newtext)
         self.GotoPos(self.buffer.curpos)
         self.SetAnchor(self.buffer.anchor)
-
-    def SyncToBuffer(self, evt=None):
-        self.buffer.text = self.GetText()
-        self.buffer._curpos = self.GetCurrentPos()
-        self.buffer._anchor = self.GetAnchor()
 
 
     def _Setup(self):

@@ -52,10 +52,11 @@ class MainWindow(wx.Frame):
         mainPanel.SetSizer(box)
         mainPanel.SetAutoLayout(True)
 
-        oldstdout = sys.stdout
-        oldstderr = sys.stderr
-        sys.stdout = Tee(oldstdout, self.messages_buffer)
-        sys.stderr = Tee(oldstderr, self.messages_buffer)
+        if len(sys.argv) == 1:
+            oldstdout = sys.stdout
+            oldstderr = sys.stderr
+            sys.stdout = Tee(oldstdout, self.messages_buffer)
+            sys.stderr = Tee(oldstderr, self.messages_buffer)
 
         self.CreateStatusBar()
         self.CreateMenu()
