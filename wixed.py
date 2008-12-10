@@ -22,7 +22,7 @@ class Buffer(object):
     def __init__(self, name):
         self.name = name
         self.text = ''
-        self._lines = []
+        self._lines = ['']
         self._curpos = 0
         self._anchor = 0
         self.changed = EventHook()
@@ -30,35 +30,60 @@ class Buffer(object):
     curpos = observed('_curpos', lambda s: s.changed)
     anchor = observed('_anchor', lambda s: s.changed)
 
+    #@property
+    #def text(self):
+    #    return '\n'.join(self._lines)
+embolimo
+keimeno
+
     def write(self, v):
         self.text += v
         self._curpos = len(self.text)
         self._anchor = len(self.text)
         self.changed.fire(v)
-        self._lines = self.text.splitlines()
 
     def insert(self, lineno, col, text, linesadded):
-        if linesadded > 0:
-            before, after = self._lines[:lineno], self._lines[lineno:]
-            print 'cant handle splitting of line TODO'
-            newlines = []
-            newlines.extend(before)
-            newlines.extend(text.splitlines())
-            newlines.extend(after)
-            self._lines = newlines
-            print 'multilines', lineno, col
-            print repr(text)
-        else:
-            line = self._lines[lineno]
-            front, back = line[:col], line[col:]
-            newline = ''.join([front, text, back])
-            print 'newline', newline
-            self._lines[lineno] = newline
+        print locals()
+        #import pdb; pdb.set_trace()
+        try:
+            if linesadded == 0:
+                line = self._lines[lineno]
+                front, back = line[:col], line[col:]
+                newline = ''.join([front, text, back])
+                self._lines[lineno] = newline
+            else:
+                #import pdb; pdb.set_trace()
+                print 'before insert', self._lines
+                middle = text.split('\n') # splitlines doesn't return the empty new line
+                # the first line has to be joined with existing one
+                first, rest = middle[0], middle[1:]
+                print 'first, rest', first, rest
+                line = self._lines[lineno]
+                front, back = line[:col], line[col:]
+                newline = ''.join([front, first])
+                self._lines[lineno] = newline
+                print 'newline', newline
+                print 'after first line', self._lines
 
+                #the rest we can just insert
+                for i, line in enumerate(rest):
+                    idx = i + lineno + 1
+                    print 'inserting', repr(line), 'at', idx
+                    self._lines.insert(idx, line)
+                # finish off by writing the last line, the split one
+                if back:
+                    print 'inserting back', repr(back), 'at', idx + 1
+                    self._lines.insert(idx + 1, back)
+        except IndexError:
+            print locals()
+            print self._lines
+            raise
         print self._lines
 
+
     def delete(self, line, col, length, linesremoved):
-        pass
+        print 'deleting'
+        print locals()
 
     def add_line(self, line):
         pass
