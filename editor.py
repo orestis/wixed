@@ -5,6 +5,7 @@ import wx
 from wx import stc
 
 TABWIDTH = 4
+DEBUG = True
 
 
 def GetModificationType(mask):
@@ -25,6 +26,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self._Setup()
 
         self._buffer = buffer
+        self._just_modified = True
         self.SetText(self._buffer.text)
         self.HookBuffer(self._buffer)
         self.Bind(stc.EVT_STC_MODIFIED, self.OnModified)
@@ -53,10 +55,17 @@ class FundamentalEditor(stc.StyledTextCtrl):
             col = self.GetColumn(pos)
             text = event.Text
             linesadded = event.LinesAdded
-            if isinsert:
-                self.buffer.insert(lineno, col, text, linesadded, self)
-            else:
-                self.buffer.delete(lineno, col, len(text), linesadded, self)
+            try:
+                if isinsert:
+                    self.buffer.insert(lineno, col, text, linesadded, self)
+                else:
+                    self.buffer.delete(lineno, col, len(text), linesadded, self)
+            except Exception, e:
+                print e
+                import pdb; pdb.set_trace()
+            if DEBUG:
+                assert (self.buffer.text == self.GetText(),
+                    'buffer is out of sync, last locals where %r' % locals())
 
 
     def UpdateUI(self, _):
@@ -68,7 +77,10 @@ class FundamentalEditor(stc.StyledTextCtrl):
             self.UnhookBuffer(self._buffer)
         self._buffer = newbuffer
         self.HookBuffer(self._buffer)
-        self.SetText(self._buffer.text)
+        self._just_modified = True
+        self.ClearAll()
+        self._just_modified = True
+        self.SetText(self._buffer.text) # SetText does a ClearAll behind the scenes, but we can't set the _just_modified flag then
         self.SyncPosFromBuffer()
 
 

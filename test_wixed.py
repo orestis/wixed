@@ -33,6 +33,7 @@ class testBuffer(object):
         assert_equal(b.text, 'mimee\nmooni\nme')
 
 
+
     def test_write(self):
         b = Buffer('test')
         b.write('123')
@@ -44,6 +45,7 @@ class testBuffer(object):
         b = Buffer('test')
         print >> b, 'Hello!'
         assert_equal(b.text, 'Hello!\n')
+
 
     def test_delete(self):
         b = Buffer('test')
@@ -64,12 +66,77 @@ class testBuffer(object):
         b.delete(0, 5, 1, -1)
         assert_equal(b.text, '23489')
 
+
     def test_delete_2(self):
         b = Buffer('test')
         b.write('123\n456\n789\n')
 
         b.delete(1, 1, 7, -2)
         assert_equal(b.text, '123\n4')
+
+
+    def test_delete_3(self):
+        b = Buffer('test')
+        b.write('1234567890\nabcdefghij\nABCDEFGHIJ')
+
+        b.delete(0, 10, 11, -1)
+        assert_equal(b.text, '1234567890\nABCDEFGHIJ')
+
+        b.delete(0, 4, 11, -1)
+        assert_equal(b.text, '1234EFGHIJ')
+
+
+    def test_delete_all(self):
+        b = Buffer('test')
+        b.write('a\n')
+        b.delete(0, 0, 2, -1)
+        assert_equal(b.text, '')
+        b.insert(0, 0, 'a', 0)
+        assert_equal(b.text, 'a')
+
+    
+    def test_lines(self):
+        b = Buffer('test')
+        arglist = []
+
+        def observer(args):
+            arglist.append(args)
+
+        b.inserted += observer
+        b.deleted += observer
+
+        assert_equal(b.lines, [''])
+
+        b.write('123\n')
+        assert_equal(b.lines, ['123', ''])
+        assert_equal(len(b.lines), 2)
+        assert_equal(arglist, [(0, 0, '123\n', None)])
+
+        del arglist[:]
+        b.lines[0] = 'new!'
+
+        assert_equal(arglist, [(0, 0, 3, None), (0, 0, 'new!', None)])
+
+        del arglist[:]
+        copy = b.lines[:]
+        copy[0] = 'noooo'
+        assert_equal(arglist, [])
+
+        assert_equal(b.text, 'new!\n') #sanity
+        b.lines.append('nice!')
+        assert_equal(b.text, 'new!\nnice!\n')
+        assert_equal(arglist, [(1, 0, 'nice!\n', None)])
+
+        del arglist[:]
+        b.lines.extend(['an', 'other'])
+        assert_equal(b.text, 'new!\nnice!\nan\nother\n')
+        assert_equal(arglist, [(2, 0, 'an\n', None), (3, 0, 'other\n', None)])
+
+        previouslines = b.lines[:][1:]
+        del arglist[:]
+        del b.lines[1:]
+        assert_equal(b.text, 'new!')
+        assert_equal(list(reversed(arglist)), [(i + 1, 0, len(line), None) for i, line in enumerate(previouslines)])
 
 
 

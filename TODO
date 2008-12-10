@@ -9,10 +9,10 @@
      somewhere? 
  * look into http://wiki.wxpython.org/LongRunningTasks for processes
  * create a 'fundamental' STC with pluggable lexer
- * [NEAR] use multiple views (start with a split window with two STCs and blepoume) 
- * [NEAR] editors should not bypass event handling when updating buffers - the buffers should not send events to the editors that created them
- * [NEAR] More sophisticated buffer handling - synchronize 'actions' rather than text
- * [STOOPID] Um, would just sending the new line(s) back and forth be simpler than trying to synchronize a lot of crap?
+ * [DONE] use multiple views (start with a split window with two STCs and blepoume) 
+ * [DONE] editors should not bypass event handling when updating buffers - the buffers should not send events to the editors that created them
+ * [DONE] More sophisticated buffer handling - synchronize 'actions' rather than text
+ * [NOT STOOPID - IIAB, DFI] Um, would just sending the new line(s) back and forth be simpler than trying to synchronize a lot of crap?
  * [DONE] write the stdout to the console as well, for posterity
  * [DONE] use events rather than polling threads - editors subscribe to their buffers onchange events
  * [DONE] investigate prev/next buffer - each window should have its own index into the bufferlist - prev/next should take index arg
