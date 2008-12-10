@@ -140,18 +140,17 @@ class Buffer(object):
             front, back = line[:col], line[col+length:]
             self._lines[lineno] = front + back
         else:
-            previouslines = self._lines[:lineno]
             changedlines = self._lines[lineno : lineno + abs(linesremoved) + 1]
             afterlines = self._lines[lineno + abs(linesremoved) + 1:]
             text = '\n'.join(changedlines)
             front, back = text[:col], text[col+length:]
             newtext = front + back
             newlines = newtext.splitlines()
-            self._lines = previouslines
+            del self._lines[lineno:]
             self._lines.extend(newlines)
             self._lines.extend(afterlines)
         if not self._lines:
-            self._lines = ['']
+            self._lines.append('')
 
 
         self.deleted.fire((lineno, col, length, where))

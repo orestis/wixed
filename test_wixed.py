@@ -136,6 +136,8 @@ class testBuffer(object):
         del arglist[:]
         del b.lines[1:]
         assert_equal(b.text, 'new!')
+        assert_equal(len(b._lines), 1)
+        assert_equal(len(b.lines), 1)
         assert_equal(list(reversed(arglist)), [(i + 1, 0, len(line), None) for i, line in enumerate(previouslines)])
 
 
