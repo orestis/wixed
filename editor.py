@@ -25,26 +25,39 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self._Setup()
 
         self._buffer = buffer
-        self._buffer.changed += self.SyncFromBuffer
         self.SetText(self._buffer.text)
+        self.HookBuffer(self._buffer)
         self.Bind(stc.EVT_STC_MODIFIED, self.OnModified)
         self.Bind(stc.EVT_STC_UPDATEUI, self.UpdateUI)
+        self._just_modified = False
+
+    def UnhookBuffer(self, b):
+        b.pos_changed -= self.SyncPosFromBuffer
+        b.inserted -= self.SyncInsertFromBuffer
+        b.deleted -= self.SyncDeleteFromBuffer
+
+    def HookBuffer(self, b):
+        b.pos_changed += self.SyncPosFromBuffer
+        b.inserted += self.SyncInsertFromBuffer
+        b.deleted += self.SyncDeleteFromBuffer
 
     def OnModified(self, event):
         isdelete = event.ModificationType & stc.STC_MOD_DELETETEXT
         isinsert = event.ModificationType & stc.STC_MOD_INSERTTEXT
         if (isinsert or isdelete):
+            if self._just_modified:
+                self._just_modified = False
+                return
             pos = event.Position
             lineno = self.LineFromPosition(pos)
             col = self.GetColumn(pos)
             text = event.Text
             linesadded = event.LinesAdded
             if isinsert:
-                self.buffer.insert(lineno, col, text, linesadded)
+                self.buffer.insert(lineno, col, text, linesadded, self)
             else:
-                self.buffer.delete(lineno, col, len(text), linesadded)
+                self.buffer.delete(lineno, col, len(text), linesadded, self)
 
-            self.buffer.text = self.GetText()
 
     def UpdateUI(self, _):
         self.buffer._curpos = self.GetCurrentPos()
@@ -52,17 +65,35 @@ class FundamentalEditor(stc.StyledTextCtrl):
         
     def __set_buffer(self, newbuffer):
         if self._buffer is not None:
-            self._buffer.changed -= self.SyncFromBuffer
+            self.UnhookBuffer(self._buffer)
         self._buffer = newbuffer
-        self._buffer.changed += self.SyncFromBuffer
+        self.HookBuffer(self._buffer)
         self.SetText(self._buffer.text)
-        self.SyncFromBuffer()
+        self.SyncPosFromBuffer()
+
 
     buffer = property(lambda self: self._buffer, __set_buffer)
 
-    def SyncFromBuffer(self, newtext=None):
-        if newtext is not None:
-            self.AppendText(newtext)
+
+    def SyncDeleteFromBuffer(self, event_args):
+        lineno, col, length, where = event_args
+        if where != self:
+            pos = self.PositionFromLine(lineno) + col
+            self._just_modified = True
+            self.SetTargetStart(pos)
+            self.SetTargetEnd(pos + length)
+            self.ReplaceTarget('')
+
+
+    def SyncInsertFromBuffer(self, event_args):
+        lineno, col, text, where = event_args
+        if where != self:
+            pos = self.PositionFromLine(lineno) + col
+            self._just_modified = True
+            self.InsertText(pos, text)
+
+
+    def SyncPosFromBuffer(self):
         self.GotoPos(self.buffer.curpos)
         self.SetAnchor(self.buffer.anchor)
 
