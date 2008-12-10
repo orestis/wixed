@@ -22,6 +22,7 @@ class Buffer(object):
     def __init__(self, name):
         self.name = name
         self.text = ''
+        self._lines = []
         self._curpos = 0
         self._anchor = 0
         self.changed = EventHook()
@@ -34,6 +35,33 @@ class Buffer(object):
         self._curpos = len(self.text)
         self._anchor = len(self.text)
         self.changed.fire(v)
+        self._lines = self.text.splitlines()
+
+    def insert(self, lineno, col, text, linesadded):
+        if linesadded > 0:
+            before, after = self._lines[:lineno], self._lines[lineno:]
+            print 'cant handle splitting of line TODO'
+            newlines = []
+            newlines.extend(before)
+            newlines.extend(text.splitlines())
+            newlines.extend(after)
+            self._lines = newlines
+            print 'multilines', lineno, col
+            print repr(text)
+        else:
+            line = self._lines[lineno]
+            front, back = line[:col], line[col:]
+            newline = ''.join([front, text, back])
+            print 'newline', newline
+            self._lines[lineno] = newline
+
+        print self._lines
+
+    def delete(self, line, col, length, linesremoved):
+        pass
+
+    def add_line(self, line):
+        pass
 
     def __repr__(self):
         return 'Buffer <%r>' % self.name

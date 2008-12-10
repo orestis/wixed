@@ -31,12 +31,19 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self.Bind(stc.EVT_STC_UPDATEUI, self.UpdateUI)
 
     def OnModified(self, event):
-            #print 'p', event.Position
-            #print 't', event.Text
-            #print 'l', event.Length
-            #print 'linesadded', event.LinesAdded
-        if (event.ModificationType & stc.STC_MOD_DELETETEXT or
-            event.ModificationType & stc.STC_MOD_INSERTTEXT):
+        isdelete = event.ModificationType & stc.STC_MOD_DELETETEXT
+        isinsert = event.ModificationType & stc.STC_MOD_INSERTTEXT
+        if (isinsert or isdelete):
+            pos = event.Position
+            lineno = self.LineFromPosition(pos)
+            col = self.GetColumn(pos)
+            text = event.Text
+            linesadded = event.LinesAdded
+            if isinsert:
+                self.buffer.insert(lineno, col, text, linesadded)
+            else:
+                self.buffer.delete(lineno, col, len(text), linesadded)
+
             self.buffer.text = self.GetText()
 
     def UpdateUI(self, _):
