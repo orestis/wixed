@@ -96,6 +96,9 @@ class FundamentalEditor(stc.StyledTextCtrl):
             self.SetTargetStart(pos)
             self.SetTargetEnd(pos + length)
             self.ReplaceTarget('')
+            if DEBUG:
+                assert (self.buffer.text == self.GetText(),
+                    'buffer is out of sync, last locals where %r' % locals())
 
 
     def SyncInsertFromBuffer(self, event_args):
@@ -104,6 +107,10 @@ class FundamentalEditor(stc.StyledTextCtrl):
             pos = self.PositionFromLine(lineno) + col
             self._just_modified = True
             self.InsertText(pos, text)
+            if DEBUG:
+                assert (self.buffer.text == self.GetText(),
+                    'buffer is out of sync, last locals where %r' % locals())
+
 
 
     def SyncPosFromBuffer(self):

@@ -33,7 +33,6 @@ class testBuffer(object):
         assert_equal(b.text, 'mimee\nmooni\nme')
 
 
-
     def test_write(self):
         b = Buffer('test')
         b.write('123')
@@ -93,6 +92,24 @@ class testBuffer(object):
         assert_equal(b.text, '')
         b.insert(0, 0, 'a', 0)
         assert_equal(b.text, 'a')
+
+    def test_delete_4(self):
+        b = Buffer('test')
+        assert_equal(b.text, '')
+        assert_equal(b.lines, [''])
+        b.lines.append('asdf')
+        assert_equal(b.text, 'asdf\n')
+        assert_equal(b.lines, ['asdf', ''])
+        b.delete(0, 0, 4, 0)
+        assert_equal(b.text, '\n')
+        assert_equal(b.lines, ['', ''])
+        b.insert(0, 0, '\n', 1)
+        assert_equal(b.text, '\n\n')
+        assert_equal(b.lines, ['', '', ''])
+        b.delete(1, 0, 1, -1)
+        assert_equal(b.text, '\n')
+        assert_equal(b.lines, ['', ''])
+
 
     
     def test_lines(self):

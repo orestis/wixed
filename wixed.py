@@ -68,6 +68,7 @@ class Buffer(object):
         self.pos_changed = EventHook()
         self.inserted = EventHook()
         self.deleted = EventHook()
+        self.events = []
 
     def _observe_list(self, method, *args):
         if method == '__setitem__':
@@ -113,6 +114,7 @@ class Buffer(object):
                     v.count('\n'))
 
     def insert(self, lineno, col, text, linesadded, where=None):
+        self.events.append(('insert', self.text, self._lines, locals()))
         line = self._lines[lineno]
         front, back = line[:col], line[col:]
             
@@ -135,6 +137,7 @@ class Buffer(object):
 
 
     def delete(self, lineno, col, length, linesremoved, where=None):
+        self.events.append(('delete', self.text, self._lines, locals()))
         if linesremoved == 0:
             line = self._lines[lineno]
             front, back = line[:col], line[col+length:]
@@ -146,6 +149,8 @@ class Buffer(object):
             front, back = text[:col], text[col+length:]
             newtext = front + back
             newlines = newtext.splitlines()
+            if not newlines:
+                newlines.append('')
             del self._lines[lineno:]
             self._lines.extend(newlines)
             self._lines.extend(afterlines)
