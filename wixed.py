@@ -2,10 +2,52 @@ import subprocess
 import os
 import signal
 
+import wx
+
 from utils import Pipe, CircleList, EventHook, observed
+from editor import FundamentalEditor
+
+class WindowManager(object):
+    def __init__(self, parent, onnew):
+        self._windows = []
+        self._parent = parent
+        self._eds_to_windows = {}
+        self.onnew = onnew
+
+    @property
+    def windows(self):
+        return self._windows
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._windows[item]
+        else:
+            return self._eds_to_windows[item]
+
+
+    def __len__(self):
+        return len(self._windows)
+
+    def remove(self, ed):
+        w = self._eds_to_windows[ed]
+        self._windows.remove(w)
+        del self._eds_to_windows[ed]
+
+
+    def new(self, buffer):
+        try:
+            editor = FundamentalEditor(self._parent, wx.NewId(), buffer)
+            w = Window(buffer, editor)
+            self._eds_to_windows[editor] = w
+            self._windows.append(w)
+            self.onnew(w)
+            return w
+        except Exception, e:
+            print e
+
 
 class Window(object):
-    def __init__(self, buffer, editor, buf_idx):
+    def __init__(self, buffer, editor):
         self._buffer = buffer
         self.editor = editor
 

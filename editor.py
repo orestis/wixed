@@ -30,6 +30,10 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self.Bind(stc.EVT_STC_UPDATEUI, self.UpdateUI)
         self._just_modified = False
 
+    def Close(self):
+        if self._buffer is not None:
+            self.UnhookBuffer(self._buffer)
+
     def UnhookBuffer(self, b):
         b.pos_changed -= self.SyncPosFromBuffer
         b.inserted -= self.SyncInsertFromBuffer
@@ -68,11 +72,14 @@ class FundamentalEditor(stc.StyledTextCtrl):
 
     def UpdateUI(self, _):
         self.buffer._curpos = self.GetCurrentPos()
-        self.buffer._anchor = self.GetAnchor()
+        self.buffer.anchor = self.GetAnchor()
         
+    
+    def _SyncPosFromBuffer(self):
+        super(FundamentalEditor, self).SetSelection(self.buffer.anchor, self.buffer.curpos)
 
     def SyncPosFromBuffer(self):
-        wx.CallAfter(self.SetSelection, self.buffer.anchor, self.buffer.curpos)
+        wx.CallAfter(self._SyncPosFromBuffer)
 
 
     def __set_buffer(self, newbuffer):

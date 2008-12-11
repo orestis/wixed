@@ -9,7 +9,7 @@ import wx.stc as stc
 from PythonCtrl import PythonSTC
 from editor import FundamentalEditor
 from commandline import CommandLineControl
-from wixed import BufferManager
+from wixed import BufferManager, WindowManager
 from utils import Tee
 
 ID_MAINPANEL = wx.NewId()
@@ -32,19 +32,19 @@ class MainWindow(wx.Frame):
         notebookstyle = (
             wx.aui.AUI_NB_DEFAULT_STYLE | wx.aui.AUI_NB_TAB_EXTERNAL_MOVE
             | wx.aui.AUI_NB_WINDOWLIST_BUTTON | wx.aui.AUI_NB_SCROLL_BUTTONS
+            | wx.aui.AUI_NB_TAB_FIXED_WIDTH
         )
         self._nb= wx.aui.AuiNotebook(mainPanel, style=notebookstyle)
-        self.windows = []
+        self.windows = WindowManager(onnew=self.OnNewWindow, parent=self._nb)
         for b in self.buffers:
-            ed = FundamentalEditor(self._nb, wx.NewId(), b)
-            self._nb.AddPage(ed, b.name)
-
+            self.windows.new(b)
+        self.context['WINDOWS'] = self.windows
         self.current_window_index = self._nb.Selection
         self.CurrentBufferChanged(self.current_window.buffer)
 
         self.context['NB'] = self._nb
         self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
-
+        self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.OnPageClose)
         self.commandLine = CommandLineControl(mainPanel, wx.ID_ANY, size=(125, -1), context=self.context)
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(self._nb, proportion=1, flag=wx.EXPAND)
@@ -81,6 +81,12 @@ class MainWindow(wx.Frame):
     def current_window(self):
         return self._nb.GetPage(self.current_window_index)
 
+    def OnPageClose(self, event):
+        ed = self._nb.GetPage(event.Selection)
+        self.windows.remove(ed)
+        ed.Close()
+        event.Skip()
+
     def OnPageChanged(self, event):
         sel = self._nb.GetSelection()
         self.current_window_index = sel
@@ -108,6 +114,9 @@ class MainWindow(wx.Frame):
         menu = mb.GetMenu(theid)
         menuitem = menu.Append(wx.NewId(), newbuf.name)
         self.Bind(wx.EVT_MENU, lambda _: self.CurrentBufferChanged(newbuf), menuitem)
+
+    def OnNewWindow(self, newwindow):
+        self._nb.AddPage(newwindow.editor, newwindow.buffer.name)
 
 
     def CreateMenu(self):
