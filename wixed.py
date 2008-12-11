@@ -156,19 +156,17 @@ class Buffer(object):
         self.deleted.fire((lineno, col, length, where))
             
 
-    def add_line(self, line):
-        pass
-
     def __repr__(self):
         return 'Buffer <%r>' % self.name
 
 
 
 class BufferManager(object):
-    def __init__(self):
+    def __init__(self, onnew=None):
         self._buffers = []
         self._names_to_bufs = {}
         self._bufs_to_indexes = {}
+        self.onnew = onnew
 
     @property
     def buffers(self):
@@ -179,6 +177,8 @@ class BufferManager(object):
         self._buffers.append(b)
         self._bufs_to_indexes[b] = len(self._buffers) - 1
         self._names_to_bufs[b.name] = b
+        if self.onnew:
+            self.onnew(b)
         return b
 
     def __getitem__(self, item):

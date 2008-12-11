@@ -63,6 +63,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
             except Exception, e:
                 print e
                 import pdb; pdb.set_trace()
+                raise
             if DEBUG:
                 assert (self.buffer.text == self.GetText(),
                     'buffer is out of sync, last locals where %r' % locals())

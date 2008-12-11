@@ -17,12 +17,13 @@ ID_MAINPANEL = wx.NewId()
 class MainWindow(wx.Frame):
     def __init__(self, parent, id):
         wx.Frame.__init__(self, parent, id, 'title', size=(800, 600))
-        self.buffers = BufferManager()
+        self.CreateMenu()
+        self.buffers = BufferManager(onnew=self.OnNewBuffer)
         self.messages_buffer = self.buffers.new('* Messages *')
         scratch = self.buffers.new('* Scratch *')
         self.context = {
             'BUFFERS': self.buffers,
-            'wx': wx
+            'wx': wx, 'MAIN': self,
         }
 
         mainPanel = wx.Panel(self, wx.ID_ANY)
@@ -59,7 +60,6 @@ class MainWindow(wx.Frame):
             sys.stderr = Tee(oldstderr, self.messages_buffer)
 
         self.CreateStatusBar()
-        self.CreateMenu()
 
         self.Show(True)
         print >> self.messages_buffer, '# Hello!'
@@ -102,6 +102,13 @@ class MainWindow(wx.Frame):
         self._nb.SetPageText(self.current_window_index, newbuffer.name)
         self.context['B'] = self.current_window.buffer
 
+    def OnNewBuffer(self, newbuf):
+        mb = self.GetMenuBar()
+        theid = mb.FindMenu('Buffers')
+        menu = mb.GetMenu(theid)
+        menuitem = menu.Append(wx.NewId(), newbuf.name)
+        self.Bind(wx.EVT_MENU, lambda _: self.CurrentBufferChanged(newbuf), menuitem)
+
 
     def CreateMenu(self):
         filemenu = wx.Menu()
@@ -122,6 +129,7 @@ class MainWindow(wx.Frame):
         bufferMenu = wx.Menu()
         bufferMenu.Append(301, "&Next buffer")
         bufferMenu.Append(302, "&Previous buffer")
+        bufferMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.OnNextBuffer, id=301)
         self.Bind(wx.EVT_MENU, self.OnPreviousBuffer, id=302)
 

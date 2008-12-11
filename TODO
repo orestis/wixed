@@ -16,6 +16,6 @@
  * [DONE] write the stdout to the console as well, for posterity
  * [DONE] use events rather than polling threads - editors subscribe to their buffers onchange events
  * [DONE] investigate prev/next buffer - each window should have its own index into the bufferlist - prev/next should take index arg
- * list of buffers in menu - NB new buffers should automatically appear there
+ * [DONE] list of buffers in menu - NB new buffers should automatically appear there
  * create new windows (WindowManager.new)
  * kill buffers
