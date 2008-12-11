@@ -29,10 +29,13 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self.Bind(stc.EVT_STC_MODIFIED, self.OnModified)
         self.Bind(stc.EVT_STC_UPDATEUI, self.UpdateUI)
         self._just_modified = False
+        self._just_modified_pos = False
 
-    def Close(self):
+
+    def __del__(self):
         if self._buffer is not None:
             self.UnhookBuffer(self._buffer)
+
 
     def UnhookBuffer(self, b):
         b.pos_changed -= self.SyncPosFromBuffer
@@ -71,12 +74,18 @@ class FundamentalEditor(stc.StyledTextCtrl):
 
 
     def UpdateUI(self, _):
+        if self._just_modified_pos:
+            self._just_modified_pos = False
+            return
         self.buffer._curpos = self.GetCurrentPos()
         self.buffer.anchor = self.GetAnchor()
         
     
     def _SyncPosFromBuffer(self):
-        super(FundamentalEditor, self).SetSelection(self.buffer.anchor, self.buffer.curpos)
+        start, end = self.GetSelection()
+        if (start, end) != (self.buffer.anchor, self.buffer.curpos):
+            self._just_modified_pos = True
+            self.SetSelection(self.buffer.anchor, self.buffer.curpos)
 
     def SyncPosFromBuffer(self):
         wx.CallAfter(self._SyncPosFromBuffer)
@@ -115,12 +124,11 @@ class FundamentalEditor(stc.StyledTextCtrl):
         if where != self:
             pos = self.PositionFromLine(lineno) + col
             self._just_modified = True
+            self._just_modified_pos = True # InsertText invokes UpdateUI on the Mac, not on windows.
             self.InsertText(pos, text)
             if DEBUG:
                 assert (self.buffer.text == self.GetText(),
                     'buffer is out of sync, last locals where %r' % locals())
-
-
 
 
     def _Setup(self):

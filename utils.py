@@ -9,7 +9,7 @@ class Pipe(object):
 
     def do_piping(self):
         while True:
-            c = self.readStream.read(10)
+            c = self.readStream.read(1)
             if c == '':
                 break
             self.writeStream.write(c)

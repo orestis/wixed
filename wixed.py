@@ -262,18 +262,30 @@ class BufferManager(object):
 class Process(object):
     def __init__(self, *args, **kwargs):
         self._buffer = kwargs.pop('buffer')
-        kwargs['stdout'] = subprocess.PIPE
-        #kwargs['stdin'] = subprocess.PIPE
-        kwargs['stderr'] = subprocess.STDOUT
-        kwargs['bufsize'] = 0 #unbuffered
-        self.popen = subprocess.Popen(*args, **kwargs)
-        Pipe(self.popen.stdout, self._buffer)
+        try:
+            raise ImportError('TODO this looks very promising')
+            import pexpect
+            command = args[0][0]
+            cmdargs = args[0][1:]
+            self.popen = pexpect.spawn(command, cmdargs)
+            self.popen.setecho(False)
+            Pipe(self.popen, self._buffer)
+        except ImportError:
+            kwargs['stdout'] = subprocess.PIPE
+            #kwargs['stdin'] = subprocess.PIPE
+            kwargs['stderr'] = subprocess.STDOUT
+            kwargs['bufsize'] = 0 #unbuffered
+            self.popen = subprocess.Popen(*args, **kwargs)
+            Pipe(self.popen.stdout, self._buffer)
 
     def kill(self):
         try:
             import win32api
             win32api.TerminateProcess(int(self.popen._handle), -1)
         except ImportError:
-            os.kill(self.popen.pid, signal.SIGKILL)
+            if hasattr(self.popen, 'close'):
+                self.popen.close(True)
+            else:
+                os.kill(self.popen.pid, signal.SIGKILL)
         
 

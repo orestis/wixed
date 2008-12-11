@@ -84,7 +84,6 @@ class MainWindow(wx.Frame):
     def OnPageClose(self, event):
         ed = self._nb.GetPage(event.Selection)
         self.windows.remove(ed)
-        ed.Close()
         event.Skip()
 
     def OnPageChanged(self, event):
@@ -117,7 +116,6 @@ class MainWindow(wx.Frame):
 
     def OnNewWindow(self, newwindow):
         self._nb.AddPage(newwindow.editor, newwindow.buffer.name)
-
 
     def CreateMenu(self):
         filemenu = wx.Menu()
