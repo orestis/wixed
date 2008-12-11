@@ -108,10 +108,16 @@ class Buffer(object):
         return self._obs_lines
 
     def write(self, v):
+        u_v = v.decode('utf-8').replace('\r\n', '\n')
         self.insert(len(self._lines) - 1, # last line
                     len(self._lines[-1]), # after the last character
-                    v,
-                    v.count('\n'))
+                    u_v,
+                    u_v.count('\n'))
+        self.scroll_to_end()
+
+    def scroll_to_end(self):
+        self._anchor = -1
+        self.curpos = -1
 
     def insert(self, lineno, col, text, linesadded, where=None):
         self.events.append(('insert', self.text, self._lines, locals()))

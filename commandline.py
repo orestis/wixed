@@ -1,10 +1,24 @@
 from utils import HistoryList
+from wixed import Process
+
+class CommandDispatcher(object):
+    def execute(self, command, context):
+        if command.startswith('!'):
+            if '>>' in command:
+                command, pipe = command.split('>>')
+                output_buf = context[pipe.strip()]
+            else:
+                output_buf = context['BUFFERS'].new('* output *')
+                
+            Process(command[1:].split(), buffer=output_buf)
+
 
 class CommandLineHandler(object):
 
     def __init__(self):
         self.command = ''
         self.history = HistoryList()
+        self.dispatcher = CommandDispatcher()
 
     def line_changed(self, line):
         if callable(line):
@@ -27,6 +41,11 @@ class CommandLineHandler(object):
     def execute(self, context):
         if self.command == '':
             return
+        self.history.append(self.command)
+        if self.command.startswith(':'):
+            self.dispatcher.execute(self.command[1:], context)
+            return
+
         self.history.append(self.command)
         try:
             exec(self.command, context)

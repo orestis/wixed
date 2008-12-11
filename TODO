@@ -19,3 +19,4 @@
  * [DONE] list of buffers in menu - NB new buffers should automatically appear there
  * create new windows (WindowManager.new)
  * kill buffers
+ * save and load command line history

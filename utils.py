@@ -111,4 +111,5 @@ def observed(field, event_to_fire):
 
     def getter(self):
         return getattr(self, field)
+
     return property(getter, setter)

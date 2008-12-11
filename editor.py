@@ -1,6 +1,3 @@
-import time
-from threading import Thread
-
 import wx
 from wx import stc
 
@@ -73,6 +70,11 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self.buffer._curpos = self.GetCurrentPos()
         self.buffer._anchor = self.GetAnchor()
         
+
+    def SyncPosFromBuffer(self):
+        wx.CallAfter(self.SetSelection, self.buffer.anchor, self.buffer.curpos)
+
+
     def __set_buffer(self, newbuffer):
         if self._buffer is not None:
             self.UnhookBuffer(self._buffer)
@@ -112,10 +114,6 @@ class FundamentalEditor(stc.StyledTextCtrl):
                     'buffer is out of sync, last locals where %r' % locals())
 
 
-
-    def SyncPosFromBuffer(self):
-        self.GotoPos(self.buffer.curpos)
-        self.SetAnchor(self.buffer.anchor)
 
 
     def _Setup(self):
