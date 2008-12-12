@@ -20,7 +20,7 @@
  * kill buffers
  * save and load command line history
  * make the buffer look like a tty so that python shell can be run - pexpect/wexpect do that, have to
-   add interaction layer on top
+   add interaction layer on top. also look at pyconsole.
  * process manager
  * make new frames NB also when second instance started
  * add pluggable commands handler:

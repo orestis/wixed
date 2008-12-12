@@ -189,10 +189,91 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
         
+
+# EXPERIMENTS
 STYLE_BLACK = 11
 STYLE_ORANGE = 12
 STYLE_PURPLE = 13
 STYLE_BLUE = 14
+
+import sre
+
+class string_hi(object):
+    def __init__(self, ed, end):
+        self.ed = ed
+        self.end = end
+
+    def start(self, scanner, token):
+        pos = self.ed.last_styled_pos
+        self.ed.StartStyling(pos, 0x1f)
+        start, end = scanner.match.span()
+        length = len(token)
+        if self.end in token[1:]:
+            length = token[1:].index(self.end) + 2
+        self.ed.last_styled_pos = pos + length
+        self.ed.SetStyling(length, STYLE_PURPLE)
+
+
+
+
+class TextMateStyleEditor(FundamentalEditor):
+    def __init__(self, parent, ID, buffer):
+        super(TextMateStyleEditor, self).__init__(parent, ID, buffer)
+        self.SetLexer(stc.STC_LEX_CONTAINER)
+        self.Bind(stc.EVT_STC_STYLENEEDED, self.OnStyleNeeded)
+        self.StyleSetSpec(STYLE_BLACK, 'fore:#000000')
+        self.StyleSetSpec(STYLE_ORANGE, 'fore:#FF0F00')
+        self.StyleSetSpec(STYLE_PURPLE, 'fore:#FF00FF')
+        self.StyleSetSpec(STYLE_BLUE, 'fore:#0000FF')
+
+        self.keyword_re = r"\b(if|while|for|return)\b"
+        hi_string = string_hi(self, end='"')
+        self.scanner = sre.Scanner([
+            (self.keyword_re, self.hi_keyword),
+            (r'".*?"', hi_string.start),
+            (r'\w+', self.hi_normal),
+            (r'\s+', self.hi_normal),
+        ])
+        self.last_styled_pos = 0
+
+    def hi_keyword(self, scanner, token):
+        pos = self.last_styled_pos
+        self.StartStyling(pos, 0x1f)
+        self.last_styled_pos = pos + len(token)
+        self.SetStyling(len(token), STYLE_ORANGE)
+
+
+    def hi_normal(self, scanner, token):
+        #print scanner.lexicon
+        #print 'match', dir(scanner.match)
+        #print 'scanner', dir(scanner.scanner)
+        #print
+        pos = self.last_styled_pos
+        self.StartStyling(pos, 0x1f)
+        self.last_styled_pos = pos + len(token)
+        self.SetStyling(len(token), STYLE_BLUE)
+
+
+    def UpdateUI(self, *args):
+        super(TextMateStyleEditor, self).UpdateUI(*args)
+        line_number = self.LineFromPosition(self.GetCurrentPos())
+        line_length = self.LineLength(line_number)
+        start_pos = self.PositionFromLine(line_number)
+        # this requests that a line should be restyled
+        self.Colourise(start_pos, start_pos + line_length)
+
+    def OnStyleNeeded(self, event):
+        line_number = self.LineFromPosition(self.EndStyled)
+        start_pos = self.PositionFromLine(line_number)
+
+        line_length = self.LineLength(line_number)
+        if line_length > 0:
+            # The SCI_STARTSTYLING here is important
+            self.last_styled_pos = start_pos
+            line = self.GetLine(line_number)
+            self.scanner.scan(line)
+
+            
 
 class StyledEditor(FundamentalEditor):
     def __init__(self, parent, ID, buffer):
@@ -201,38 +282,26 @@ class StyledEditor(FundamentalEditor):
         self.Bind(stc.EVT_STC_STYLENEEDED, self.OnStyleNeeded)
 
         self.StyleSetSpec(STYLE_BLACK, 'fore:#000000')
-        self.StyleSetSpec(STYLE_ORANGE, 'fore:#FFF000')
+        self.StyleSetSpec(STYLE_ORANGE, 'fore:#FF0F00')
         self.StyleSetSpec(STYLE_PURPLE, 'fore:#FF00FF')
         self.StyleSetSpec(STYLE_BLUE, 'fore:#0000FF')
+
+    def _UpdateUI(self, *args):
+        super(StyledEditor, self).UpdateUI(*args)
+        line_number = self.LineFromPosition(self.GetCurrentPos())
+        line_length = self.LineLength(line_number)
+        start_pos = self.PositionFromLine(line_number)
+        # this requests that a line should be restyled
+        self.Colourise(start_pos, start_pos + line_length)
 
 
     def OnStyleNeeded(self, event):
         line_number = self.LineFromPosition(self.EndStyled)
-        print 'styling', line_number
         start_pos = self.PositionFromLine(line_number)
         end_pos = event.Position
 
-
         line_length = self.LineLength(line_number)
         if line_length > 0:
-
-            from parsers import simpleSQL
-            try:
-                tokens = simpleSQL.parseString(self.GetLine(line_number))
-                print tokens
-            except Exception, e:
-                print e
-                start_col = e.loc
-                print 'start_col', start_col
-                print 'start_pos', start_pos
-                print 'end_pos', end_pos
-                error_length = len(e.pstr)
-                print e.pstr
-                self.StartStyling(start_pos, stc.STC_INDICS_MASK)
-                if start_col != 0:
-                    self.SetStyling(start_pos + start_col, 0)
-                self.SetStyling(start_pos + start_col + error_length, stc.STC_INDIC0_MASK)
-                return
 
             first_char = chr(self.GetCharAt(start_pos))
 
