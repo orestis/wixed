@@ -33,5 +33,7 @@
      - re.Scanner
      - textmate syntax - complicated but powerful
      - vim syntax - looks grammar like, will check
-
+     - http://www.gooli.org/snippets/pylexer.py - similar to re.Scanner
+     - http://www.cosc.canterbury.ac.nz/greg.ewing/python/Plex/
+     - http://nedbatchelder.com/text/python-parsers.html
 
