@@ -188,3 +188,66 @@ class FundamentalEditor(stc.StyledTextCtrl):
 
         self.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
+        
+STYLE_BLACK = 11
+STYLE_ORANGE = 12
+STYLE_PURPLE = 13
+STYLE_BLUE = 14
+
+class StyledEditor(FundamentalEditor):
+    def __init__(self, parent, ID, buffer):
+        super(StyledEditor, self).__init__(parent, ID, buffer)
+        self.SetLexer(stc.STC_LEX_CONTAINER)
+        self.Bind(stc.EVT_STC_STYLENEEDED, self.OnStyleNeeded)
+
+        self.StyleSetSpec(STYLE_BLACK, 'fore:#000000')
+        self.StyleSetSpec(STYLE_ORANGE, 'fore:#FFF000')
+        self.StyleSetSpec(STYLE_PURPLE, 'fore:#FF00FF')
+        self.StyleSetSpec(STYLE_BLUE, 'fore:#0000FF')
+
+
+    def OnStyleNeeded(self, event):
+        line_number = self.LineFromPosition(self.EndStyled)
+        print 'styling', line_number
+        start_pos = self.PositionFromLine(line_number)
+        end_pos = event.Position
+
+
+        line_length = self.LineLength(line_number)
+        if line_length > 0:
+
+            from parsers import simpleSQL
+            try:
+                tokens = simpleSQL.parseString(self.GetLine(line_number))
+                print tokens
+            except Exception, e:
+                print e
+                start_col = e.loc
+                print 'start_col', start_col
+                print 'start_pos', start_pos
+                print 'end_pos', end_pos
+                error_length = len(e.pstr)
+                print e.pstr
+                self.StartStyling(start_pos, stc.STC_INDICS_MASK)
+                if start_col != 0:
+                    self.SetStyling(start_pos + start_col, 0)
+                self.SetStyling(start_pos + start_col + error_length, stc.STC_INDIC0_MASK)
+                return
+
+            first_char = chr(self.GetCharAt(start_pos))
+
+            # The SCI_STARTSTYLING here is important
+            self.StartStyling(start_pos, 0x1f)
+
+            if first_char == '-':
+                self.SetStyling(line_length, STYLE_ORANGE)
+            elif first_char == '/':
+                self.SetStyling(line_length, STYLE_PURPLE)
+            elif first_char == '*':
+                self.SetStyling(line_length, STYLE_BLUE)
+            else:
+                self.SetStyling(line_length, STYLE_BLACK)
+
+
+
+

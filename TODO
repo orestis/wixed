@@ -19,11 +19,19 @@
  * [DONE] create new windows (WindowManager.new)
  * kill buffers
  * save and load command line history
- * make the buffer look like a tty so that python shell can be run.
+ * make the buffer look like a tty so that python shell can be run - pexpect/wexpect do that, have to
+   add interaction layer on top
  * process manager
- * make new frames NB also when started again
+ * make new frames NB also when second instance started
  * add pluggable commands handler:
    - it should be possible to register : commands with their executor. function signature could be execute(command, context)
  * add pluggable keybindings handler
- * create a 'fundamental' STC with pluggable lexer
+ * create a 'fundamental' STC with pluggable lexer 
+   - candidates:
+     - pyparsing - looks interesting but needs full compliance - possibly useful as second pass
+     - plain re
+     - re.Scanner
+     - textmate syntax - complicated but powerful
+     - vim syntax - looks grammar like, will check
+
 
