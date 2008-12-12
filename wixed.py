@@ -5,7 +5,7 @@ import signal
 import wx
 
 from utils import Pipe, CircleList, EventHook, observed
-from editor import FundamentalEditor
+from editor import FundamentalEditor, TextMateStyleEditor
 
 class WindowManager(object):
     def __init__(self, parent, onnew):
@@ -36,7 +36,7 @@ class WindowManager(object):
 
     def new(self, buffer):
         try:
-            editor = FundamentalEditor(self._parent, wx.NewId(), buffer)
+            editor = TextMateStyleEditor(self._parent, wx.NewId(), buffer)
             w = Window(buffer, editor)
             self._eds_to_windows[editor] = w
             self._windows.append(w)
@@ -262,30 +262,34 @@ class BufferManager(object):
 class Process(object):
     def __init__(self, *args, **kwargs):
         self._buffer = kwargs.pop('buffer')
-        try:
-            raise ImportError('TODO this looks very promising')
-            import pexpect
-            command = args[0][0]
-            cmdargs = args[0][1:]
-            self.popen = pexpect.spawn(command, cmdargs)
-            self.popen.setecho(False)
-            Pipe(self.popen, self._buffer)
-        except ImportError:
-            kwargs['stdout'] = subprocess.PIPE
-            #kwargs['stdin'] = subprocess.PIPE
-            kwargs['stderr'] = subprocess.STDOUT
-            kwargs['bufsize'] = 0 #unbuffered
-            self.popen = subprocess.Popen(*args, **kwargs)
-            Pipe(self.popen.stdout, self._buffer)
+        kwargs['stdout'] = subprocess.PIPE
+        #kwargs['stdin'] = subprocess.PIPE
+        kwargs['stderr'] = subprocess.STDOUT
+        kwargs['bufsize'] = 0 #unbuffered
+        self.popen = subprocess.Popen(*args, **kwargs)
+        Pipe(self.popen.stdout, self._buffer)
 
     def kill(self):
         try:
             import win32api
             win32api.TerminateProcess(int(self.popen._handle), -1)
         except ImportError:
-            if hasattr(self.popen, 'close'):
-                self.popen.close(True)
-            else:
-                os.kill(self.popen.pid, signal.SIGKILL)
+            os.kill(self.popen.pid, signal.SIGKILL)
         
+
+class Shell(object):
+    def __init__(self, shell, buffer, args=None):
+        try:
+            import pexpect
+        except ImportError:
+            from external import wexpect as pexpect
+        self._buffer = buffer
+        if args is None:
+            args = []
+        self.popen = pexpect.spawn(shell, args)
+        self.popen.setecho(False)
+        Pipe(self.popen, self._buffer)
+
+    def kill(self):
+        self.popen.close(True)
 
