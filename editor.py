@@ -196,25 +196,6 @@ STYLE_ORANGE = 12
 STYLE_PURPLE = 13
 STYLE_BLUE = 14
 
-import sre
-
-class string_hi(object):
-    def __init__(self, ed, end):
-        self.ed = ed
-        self.end = end
-
-    def start(self, scanner, token):
-        pos = self.ed.last_styled_pos
-        self.ed.StartStyling(pos, 0x1f)
-        start, end = scanner.match.span()
-        length = len(token)
-        if self.end in token[1:]:
-            length = token[1:].index(self.end) + 2
-        self.ed.last_styled_pos = pos + length
-        self.ed.SetStyling(length, STYLE_PURPLE)
-
-
-
 
 class TextMateStyleEditor(FundamentalEditor):
     def __init__(self, parent, ID, buffer):
@@ -244,10 +225,6 @@ class TextMateStyleEditor(FundamentalEditor):
 
 
     def hi_normal(self, scanner, token):
-        #print scanner.lexicon
-        #print 'match', dir(scanner.match)
-        #print 'scanner', dir(scanner.scanner)
-        #print
         pos = self.last_styled_pos
         self.StartStyling(pos, 0x1f)
         self.last_styled_pos = pos + len(token)

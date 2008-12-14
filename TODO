@@ -37,3 +37,11 @@
      - http://www.cosc.canterbury.ac.nz/greg.ewing/python/Plex/
      - http://nedbatchelder.com/text/python-parsers.html
 
+   - strategies:
+     - the buffer maintains its own scope tree (position -> list of scopes)
+     - the parser/lexer runs on a separate thread
+     - needs to be locked/synchronized/dirty flag or sth like that
+     - the editor queries the buffer for the scope at the current position
+     - it has a dict of scopes -> styles, applies them. More specific wins
+     - also display the scope in the status bar or sth like that.
+

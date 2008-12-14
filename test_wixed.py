@@ -155,9 +155,55 @@ class testBuffer(object):
         assert_equal(b.text, 'new!')
         assert_equal(len(b._lines), 1)
         assert_equal(len(b.lines), 1)
-        assert_equal(list(reversed(arglist)), [(i + 1, 0, len(line), None) for i, line in enumerate(previouslines)])
+        assert_equal(list(reversed(arglist)),
+            [(0, 4, 1, None)] + [(i + 1, 0, len(line), None) for i, line in enumerate(previouslines)])
 
 
+    def test_scopes(self):
+        b = Buffer('test')
+
+        s = 's = "Hello, world!"'
+        b.write(s)
+        b.scope.parse()
+
+        sp = 'source.python'
+        assert_equal(b.scope[0, 0], [sp, 'variable'])
+        assert_equal(b.scope[0, 2], [sp, 'keyword.operator.assignment.python'])
+        s_len= len('"Hello, world!"')
+        assert_equal(b.scope[0, 4], [sp, 'string.quoted.double.single-line.python',
+            'punctuation.definition.string.begin.python'])
+        for i in range(5,  s_len + 3):
+            assert_equal(b.scope[0, i], [sp, 'string.quoted.double.single-line.python'], 'wrong scope at %d' % i)
+        assert_equal(b.scope[0, s_len + 4], ['string.quoted.double.single-line.python',
+            'punctuation.definition.string.end.python'])
+
+        #   0123456789012345
+        s2 = dedent("""\
+            def some(a1, b2):
+                f_1 = 123
+        """)
+        #   0123456789012345
+        b.write(s2)
+        mf = 'meta.function.python'
+        mfp = 'meta.function.parameters.python'
+        assert_scope(b.scope, (1, 0), (1, 2), [sp, mf, 'storage.type.function.python'])
+        assert_scope(b.scope, (1, 4), (1, 7), [sp, mf, 'entity.name.function.python'])
+        assert_scope(b.scope, (1, 8), (1, 8), [sp, mf, mfp, 'punctuation.definition.parameters.begin.python'])
+        assert_scope(b.scope, (1, 9), (1, 10), [sp, mf, mfp, 'variable.parameter.function.python'])
+        assert_scope(b.scope, (1, 11), (1, 11), [sp, mf, mfp, 'punctuation.separator.parameters.python'])
+        assert_scope(b.scope, (1, 13), (1, 14), [sp, mf, mfp, 'variable.parameter.function.python'])
+        assert_scope(b.scope, (1, 15), (1, 15), [sp, mf, mfp, 'punctuation.definition.parameters.end.python'])
+        assert_scope(b.scope, (1, 16), (1, 16), [sp, mf, mfp, 'punctuation.section.function.begin.python'])
+
+        assert_scope(b.scope, (2, 4), (2, 6), [sp, mf, 'variable'])
+        assert_equal(b.scope, (2, 7), (2, 7), [sp, mf, 'keyword.operator.assignment.python'])
+        assert_equal(b.scope, (2, 9), (2, 11), [sp, mf, 'constant.numeric.integer.decimal.python'])
+
+
+def assert_scope(scope, start, end, expected):
+    for line in range(start[0], end[0] + 1):
+        for col in range(start[1], end[1] + 1):
+            assert_equal(scope[line, col], expected)
 
 
 

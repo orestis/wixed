@@ -100,17 +100,45 @@ class ObservedList(object):
     __getitem__ = delegate('__getitem__')
 
 
+from lexers import PythonScanner
+class ScopeTree(object):
+    def __init__(self, buffer):
+        self.buffer = buffer
+
+    def parse(self):
+        self.buffer.read_pos = 0
+        scanner = PythonScanner(self.buffer)
+        self.scope = {}
+        while 1:
+            token, text = scanner.read()
+            print 'token, text', repr(token), repr(text)
+            _, curline, curcol = scanner.position()
+            curline -= 1 # we use 0 based, scanner returns 1 based
+            if token is None:
+                break
+            self.scope[(curcol, curcol + len(text))]= token
+
+    def __getitem__(self, key):
+        line, col = key
+        for (start, end), v  in self.scope.items():
+            if start <= col < end:
+                return v
+        return None
+
+
 class Buffer(object):
     def __init__(self, name):
         self.name = name
         self._lines = ['']
         self._obs_lines = ObservedList(self._lines, self._observe_list)
+        self.scope = ScopeTree(self)
         self._curpos = 0
         self._anchor = 0
         self.pos_changed = EventHook()
         self.inserted = EventHook()
         self.deleted = EventHook()
         self.events = []
+        self.read_pos = 0
 
     def _observe_list(self, method, *args):
         if method == '__setitem__':
@@ -124,6 +152,7 @@ class Buffer(object):
 
             for idx in range(end, start - 1, -1):
                 self.delete(idx, 0, len(self._lines[idx]), -1)
+            self.delete(idx - 1, len(self._lines[idx-1]), 1, -1)
         elif method == 'extend':
             iterable = args[0]
             lineno = len(self._lines) - 1
@@ -149,6 +178,11 @@ class Buffer(object):
     def lines(self):
         return self._obs_lines
 
+    def read(self, length):
+        text = self.text[self.read_pos:length]
+        self.read_pos += len(text)
+        return text
+
     def write(self, v):
         u_v = v.decode('utf-8').replace('\r\n', '\n')
         self.insert(len(self._lines) - 1, # last line
@@ -162,7 +196,11 @@ class Buffer(object):
         self.curpos = -1
 
     def insert(self, lineno, col, text, linesadded, where=None):
-        self.events.append(('insert', self.text, self._lines, locals()))
+        self._insert(lineno, col, text, linesadded, where)
+        self.inserted.fire((lineno, col, text, where))
+
+    def _insert(self, lineno, col, text, linesadded, where):
+        #self.events.append(('insert', self.text, self._lines, locals()))
         line = self._lines[lineno]
         front, back = line[:col], line[col:]
             
@@ -181,11 +219,15 @@ class Buffer(object):
 
             for i, line in enumerate(rest):
                 self._lines.insert(i + lineno + 1, line)
-        self.inserted.fire((lineno, col, text, where))
 
 
     def delete(self, lineno, col, length, linesremoved, where=None):
-        self.events.append(('delete', self.text, self._lines, locals()))
+        self._delete(lineno, col, length, linesremoved, where)
+        self.deleted.fire((lineno, col, length, where))
+
+
+    def _delete(self, lineno, col, length, linesremoved, where):
+        #self.events.append(('delete', self.text, self._lines, locals()))
         if linesremoved == 0:
             line = self._lines[lineno]
             front, back = line[:col], line[col+length:]
@@ -205,8 +247,6 @@ class Buffer(object):
         if not self._lines:
             self._lines.append('')
 
-
-        self.deleted.fire((lineno, col, length, where))
             
 
     def __repr__(self):
