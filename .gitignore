@@ -1,3 +1,6 @@
 *.pyc
 *.swo
 *.swp
+PYSMELLTAGS
+filetags
+tags
