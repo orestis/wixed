@@ -24,7 +24,6 @@ class WindowManager(object):
         else:
             return self._eds_to_windows[item]
 
-
     def __len__(self):
         return len(self._windows)
 
@@ -36,7 +35,7 @@ class WindowManager(object):
 
     def new(self, buffer):
         try:
-            editor = TextMateStyleEditor(self._parent, wx.NewId(), buffer)
+            editor = FundamentalEditor(self._parent, wx.NewId(), buffer)
             w = Window(buffer, editor)
             self._eds_to_windows[editor] = w
             self._windows.append(w)
@@ -100,7 +99,7 @@ class ObservedList(object):
     __getitem__ = delegate('__getitem__')
 
 
-from lexers import PythonScanner
+#from lexers import PythonScanner
 class ScopeTree(object):
     def __init__(self, buffer):
         self.buffer = buffer

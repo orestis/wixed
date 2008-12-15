@@ -1,8 +1,13 @@
+import re
 from collections import defaultdict
 
+# keywords will be a huge regex like so:
+# \bkeyword1|keyword2|keyword3\b 
+# we scan the line for keywords,
 class SyntaxGroup(object):
     def __init__(self):
         self.keywords = defaultdict(list)
+        self._kw_regex = {}
         self.contained_keywords = defaultdict(list)
         self.matches = defaultdict(list)
         self.contained_matches = defaultdict(list)
@@ -13,11 +18,45 @@ class SyntaxGroup(object):
         else:
             self.keywords[name].extend(kwlist.split())
 
+            regex = r'\b(' + '|'.join(self.keywords[name]) + r')\b'
+            assert regex != r'\b()\b', 'wrong regex for %s' % name
+            self._kw_regex[name] = re.compile(regex)
+
     def match(self, name, regex, contained=False, contains=None):
+        regex = re.compile(regex)
         if contained:
             self.contained_matches[name].append(regex)
         else:
             self.matches[name].append(regex)
+
+    def scan(self, text):
+        lines = text.splitlines()
+        filler = chr(5)
+        styled_lines = []
+        for line in lines:
+            style = [None] * len(line)
+            
+            while line.count(filler) < len(line):
+                gotmatch = False
+                for name, kw_re in self._kw_regex.items():
+                    m = kw_re.search(line)
+                    if m is not None:
+                        start, end = m.start(), m.end()
+                        keyword = m.group()
+                        line = kw_re.sub(''.join([filler] * len(keyword)), line, 1)
+                        style[start:end] = [name] * len(keyword)
+                        gotmatch = True
+                if not gotmatch:
+                    styled_lines.append(style)
+                    break
+        return styled_lines
+
+
+
+
+                    
+
+
 
 
 syn = SyntaxGroup()
@@ -61,7 +100,7 @@ syn.match('pythonEscape', r"(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8})", contained=Tr
 syn.match('pythonEscape', "\\$")
 
 
-syn.match('pythonNumber', r"\<0x\x\+[Ll]\=\>")
+syn.match('pythonNumber', r"0x[0-9a-fA-F]+[Ll]?")
 syn.match('pythonNumber', r"\<\d\+[LljJ]\=\>")
 syn.match('pythonNumber', r"\.\d\+\([eE][+-]\=\d\+\)\=[jJ]\=\>")
 syn.match('pythonNumber', r"\<\d\+\.\([eE][+-]\=\d\+\)\=[jJ]\=\>")
@@ -147,6 +186,9 @@ syn.keyword('pythonException', 'ZeroDivisionError')
 #let b:current_syntax = "python"
 
 
-print syn.matches
-print syn.contained_matches
-
+text = """
+if for else orestis
+def bong class
+"""
+print text
+print syn.scan(text)
