@@ -22,26 +22,27 @@
  * make the buffer look like a tty so that python shell can be run - pexpect/wexpect do that, have to
    add interaction layer on top. also look at pyconsole.
  * process manager
+ * handle minimize/maximize/resize so that the notebook is adjusting itself
  * make new frames NB also when second instance started
  * add pluggable commands handler:
    - it should be possible to register : commands with their executor. function signature could be execute(command, context)
  * add pluggable keybindings handler
  * create a 'fundamental' STC with pluggable lexer 
    - candidates:
-     - pyparsing - looks interesting but needs full compliance - possibly useful as second pass
      - plain re
-     - re.Scanner
-     - textmate syntax - complicated but powerful
      - vim syntax - looks grammar like, will check
-     - http://www.gooli.org/snippets/pylexer.py - similar to re.Scanner
-     - http://www.cosc.canterbury.ac.nz/greg.ewing/python/Plex/
-     - http://nedbatchelder.com/text/python-parsers.html
+     - textmate syntax - complicated but powerful
+   - using a full-blown parsing lib is complicated. Let's recreate Vim's way of things for now.
+     - For each line, there is a list (of the same length) with a style for each character. 
+     - The editor can just index into that list and get the desired style
+     - This can be batched in chunks for efficiency, if needed.
+     - It can also turn into an object-oriented thingy if we need textmate-like nested scopes.
 
-   - strategies:
+   - strategies: TOO COMPLICATED FOR NOW
      - the buffer maintains its own scope tree (position -> list of scopes)
      - the parser/lexer runs on a separate thread
      - needs to be locked/synchronized/dirty flag or sth like that
      - the editor queries the buffer for the scope at the current position
      - it has a dict of scopes -> styles, applies them. More specific wins
      - also display the scope in the status bar or sth like that.
-
+ * Python 2.5 only - I'm sick of 2.4
