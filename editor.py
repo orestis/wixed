@@ -206,33 +206,11 @@ class TextMateStyleEditor(FundamentalEditor):
         self.StyleSetSpec(STYLE_ORANGE, 'fore:#FF0F00')
         self.StyleSetSpec(STYLE_PURPLE, 'fore:#FF00FF')
         self.StyleSetSpec(STYLE_BLUE, 'fore:#0000FF')
-
-        self.keyword_re = r"\b(if|while|for|return)\b"
-        hi_string = string_hi(self, end='"')
-        self.scanner = sre.Scanner([
-            (self.keyword_re, self.hi_keyword),
-            (r'".*?"', hi_string.start),
-            (r'\w+', self.hi_normal),
-            (r'\s+', self.hi_normal),
-        ])
-        self.last_styled_pos = 0
-
-    def hi_keyword(self, scanner, token):
-        pos = self.last_styled_pos
-        self.StartStyling(pos, 0x1f)
-        self.last_styled_pos = pos + len(token)
-        self.SetStyling(len(token), STYLE_ORANGE)
+        self.styles = [STYLE_BLACK, STYLE_ORANGE, STYLE_PURPLE, STYLE_BLUE]
 
 
-    def hi_normal(self, scanner, token):
-        pos = self.last_styled_pos
-        self.StartStyling(pos, 0x1f)
-        self.last_styled_pos = pos + len(token)
-        self.SetStyling(len(token), STYLE_BLUE)
-
-
-    def UpdateUI(self, *args):
-        super(TextMateStyleEditor, self).UpdateUI(*args)
+    def OnModified(self, *args):
+        super(TextMateStyleEditor, self).OnModified(*args)
         line_number = self.LineFromPosition(self.GetCurrentPos())
         line_length = self.LineLength(line_number)
         start_pos = self.PositionFromLine(line_number)
@@ -245,55 +223,12 @@ class TextMateStyleEditor(FundamentalEditor):
 
         line_length = self.LineLength(line_number)
         if line_length > 0:
-            # The SCI_STARTSTYLING here is important
-            self.last_styled_pos = start_pos
             line = self.GetLine(line_number)
-            self.scanner.scan(line)
-
             
-
-class StyledEditor(FundamentalEditor):
-    def __init__(self, parent, ID, buffer):
-        super(StyledEditor, self).__init__(parent, ID, buffer)
-        self.SetLexer(stc.STC_LEX_CONTAINER)
-        self.Bind(stc.EVT_STC_STYLENEEDED, self.OnStyleNeeded)
-
-        self.StyleSetSpec(STYLE_BLACK, 'fore:#000000')
-        self.StyleSetSpec(STYLE_ORANGE, 'fore:#FF0F00')
-        self.StyleSetSpec(STYLE_PURPLE, 'fore:#FF00FF')
-        self.StyleSetSpec(STYLE_BLUE, 'fore:#0000FF')
-
-    def _UpdateUI(self, *args):
-        super(StyledEditor, self).UpdateUI(*args)
-        line_number = self.LineFromPosition(self.GetCurrentPos())
-        line_length = self.LineLength(line_number)
-        start_pos = self.PositionFromLine(line_number)
-        # this requests that a line should be restyled
-        self.Colourise(start_pos, start_pos + line_length)
-
-
-    def OnStyleNeeded(self, event):
-        line_number = self.LineFromPosition(self.EndStyled)
-        start_pos = self.PositionFromLine(line_number)
-        end_pos = event.Position
-
-        line_length = self.LineLength(line_number)
-        if line_length > 0:
-
-            first_char = chr(self.GetCharAt(start_pos))
-
-            # The SCI_STARTSTYLING here is important
-            self.StartStyling(start_pos, 0x1f)
-
-            if first_char == '-':
-                self.SetStyling(line_length, STYLE_ORANGE)
-            elif first_char == '/':
-                self.SetStyling(line_length, STYLE_PURPLE)
-            elif first_char == '*':
-                self.SetStyling(line_length, STYLE_BLUE)
-            else:
-                self.SetStyling(line_length, STYLE_BLACK)
-
-
+            for c in range(len(line)):
+                style = ord(line[c]) % 4
+                self.StartStyling(start_pos + c, 0x1f)
+                self.SetStyling(start_pos + c, self.styles[style])
+            
 
 

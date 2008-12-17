@@ -35,7 +35,7 @@ class WindowManager(object):
 
     def new(self, buffer):
         try:
-            editor = FundamentalEditor(self._parent, wx.NewId(), buffer)
+            editor = TextMateStyleEditor(self._parent, wx.NewId(), buffer)
             w = Window(buffer, editor)
             self._eds_to_windows[editor] = w
             self._windows.append(w)
