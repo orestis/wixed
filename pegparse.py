@@ -14,11 +14,18 @@ class Expr(object):
     def __invert__(self):
         return Not(self)
 
-    def match(self, s, tokens=None):
-        return self.e.match(s, tokens)
+    def match(self, s):
+        return self.e.match(s)
 
     def __repr__(self):
         return str(self.e)
+
+    def set_token(self, func):
+        self.token = func
+        return self
+
+    def token(self, t):
+        return t
 
 
 class Variable(Expr):
@@ -28,8 +35,8 @@ class Variable(Expr):
 
 class Empty(Expr):
 
-    def match(self, s, tokens=None):
-        return '', s
+    def match(self, s):
+        return self.token(''), s
 
     def __repr__(self):
         return 'EMPTY'
@@ -37,32 +44,26 @@ class Empty(Expr):
 EMPTY = Empty()
 
 class Terminal(Expr):
-    def __init__(self, e, token=lambda x: 'terminal'):
+    def __init__(self, e):
         self.e = e
-        self.token = token
     
-    def match(self, s, tokens=None):
+    def match(self, s):
         if s.startswith(self.e):
             tok, news = s[:len(self.e)], s[len(self.e):]
-            if tokens is not None:
-                tokens.append(self.token(tok))
-            return tok, news
+            return self.token(tok), news
         return None, s
 
 class Concat(Expr):
-    def __init__(self, e, b, token=lambda x: 'concat'):
+    def __init__(self, e, b):
         self.e = e
         self.b = b
-        self.token = token
 
-    def match(self, s, tokens=None):
+    def match(self, s):
         toka, news = self.e.match(s)
         if toka is not None:
             tokb, news = self.b.match(news)
             if tokb is not None:
-                if tokens is not None:
-                    tokens.append(self.token(toka+tokb))
-                return toka + tokb, news
+                return self.token([toka, tokb]), news
         return None, s
 
     def __repr__(self):
@@ -73,10 +74,10 @@ class Choice(Expr):
         self.e = e
         self.b = b
 
-    def match(self, s, tokens=None):
-        tok, news = self.e.match(s, tokens)
+    def match(self, s):
+        tok, news = self.e.match(s)
         if tok is None:
-            return self.b.match(s, tokens)
+            tok, news = self.b.match(s)
         return tok, news
 
     def __repr__(self):
@@ -87,11 +88,11 @@ class Not(Expr):
     def __init__(self, e):
         self.e = e
 
-    def match(self, s, tokens=None):
-        tok, news = self.e.match(s) # do not pass in tokens, should not consume
+    def match(self, s):
+        tok, _ = self.e.match(s)
         if tok is not None: # if e succeeds
             return None, s # fails with no consuming
-        return '', s # if not, succeed with no consuming
+        return self.token(''), s # if not, succeed with no consuming
 
     def __repr__(self):
         return '! (' + str(self.e) + ')'
@@ -121,9 +122,9 @@ class Engine(object):
     def __init__(self, grammar):
         self.grammar = grammar
 
-    def parse(self, input, tokens=None):
+    def parse(self, input):
         while input:
-            token, input = self.grammar.match(input, tokens)
+            token, input = self.grammar.match(input)
             if token is None:
                 yield ('<<<%s>>>' % input)
                 return
@@ -134,34 +135,28 @@ class Engine(object):
 
 import re
 class Regex(Expr):
-    def __init__(self, e, token=lambda x: 'regex'):
+    def __init__(self, e):
         self.e = re.compile(e)
         self._regex = e
-        self.token = token
 
-    def match(self, s, tokens=None):
+    def match(self, s):
         match = self.e.match(s)
         if match is not None:
             end = match.end()
             tok, news = s[:end], s[end:]
-            if tokens is not None:
-                tokens.append(self.token(tok))
-            return tok, news
+            return self.token(tok), news
         return None, s
 
 class Keyword(Expr):
-    def __init__(self, e, token=lambda x: 'keyword'):
-        self.e = Terminal(e, token)
-        self.check = And(self.e + Terminal(' '))
-        self.token = token
+    def __init__(self, e):
+        self.e = Terminal(e) + And(Terminal(' '))
 
-    def match(self, s, tokens=None):
-        tok, news = self.check.match(s) # check but don't consume
+    def match(self, s):
+        tok, news = self.e.match(s)
         if tok is not None:
-            return self.e.match(s, tokens) # consume the original expression
-        return None, s
-
-
+        # tok is going to be [a, b]
+            return self.token(tok[0]), news
+        return tok, news
     
 if __name__ == '__main__':
     simple = Terminal('a')
@@ -170,7 +165,8 @@ if __name__ == '__main__':
 
     repeat = Repeat(Terminal('a'))
     eng = Engine(repeat)
-    assert list(eng.parse('aaaa')) == ['aaaa']
+    print repeat.match('aaaa')
+    assert list(eng.parse('aaaa')) == ['aaaa'], list(eng.parse('aaaa'))
 
     simple = Terminal('a') / Terminal('b')
     eng = Engine(simple)
