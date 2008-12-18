@@ -29,7 +29,7 @@ shortstringitem_s = shortstringchar_s / escapeseq
 shortstringitem_d = shortstringchar_d / escapeseq
 longstring = Group(
     (Terminal("'''") + Group(Repeat(Not(T("'''")) + longstringitem)) + Terminal("'''")) /
-    (Terminal('"""') + Repeat(longstringitem) + Terminal('"""'))
+    (Terminal('"""') + Group(Repeat(Not(T('"""')) + longstringitem)) + Terminal('"""'))
 )
 shortstring = Group(
     (Terminal("'") + Repeat(shortstringitem_s) + Terminal("'")) /
@@ -68,8 +68,8 @@ source = """\
 123.
 """
 from pprint import pprint
-#result = Repeat(grammar).match(source)
-#print noempties(flatten(result))
+result, rest = Repeat(grammar).match(source)
+print noempties(flatten(result)), `rest`
 
 source = """\
 'a string'
