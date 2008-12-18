@@ -135,14 +135,16 @@ class Engine(object):
 
 import re
 class Regex(Expr):
-    def __init__(self, e):
-        self.e = re.compile(e)
+    def __init__(self, e, flags=0):
+        self.e = re.compile(e, flags)
         self._regex = e
 
     def match(self, s):
         match = self.e.match(s)
         if match is not None:
             end = match.end()
+            if end == 0: #TODO this needs investigation
+                return None, s
             tok, news = s[:end], s[end:]
             return self.token(tok), news
         return None, s
@@ -157,7 +159,50 @@ class Keyword(Expr):
         # tok is going to be [a, b]
             return self.token(tok[0]), news
         return tok, news
-    
+
+class Group(Expr):
+    def __init__(self, e):
+        self.e = e
+
+    def match(self, s):
+        tok, news = self.e.match(s)
+        if tok is not None:
+            return self.token(self._token(tok)), news
+        return tok, news
+
+    def _token(self, t):
+        if isinstance(t, (list, tuple)):
+            return ''.join(flatten(t))
+        return t
+
+class Any(Expr):
+    def match(self, s):
+        return s[:1], s[1:]
+
+def oneOf(*terms, **kwargs):
+    if len(terms) == 1 and isinstance(terms, (list, tuple)):
+        terms = terms[0]
+    token = kwargs.get('token')
+    if token is None:
+        terms = map(Terminal, terms)
+    else:
+        terms = map(lambda t: Terminal(t).set_token(token), terms)
+    return reduce(Choice, terms)
+
+def flatten(x):
+    result = []
+    for el in x:
+        #if isinstance(el, (list, tuple)):
+        if hasattr(el, "__iter__") and not isinstance(el, basestring):
+            result.extend(flatten(el))
+        else:
+            result.append(el)
+    return result
+
+def noempties(l):
+    return [t for t in l if t is not '']
+
+
 if __name__ == '__main__':
     simple = Terminal('a')
     eng = Engine(simple)
@@ -165,8 +210,7 @@ if __name__ == '__main__':
 
     repeat = Repeat(Terminal('a'))
     eng = Engine(repeat)
-    print repeat.match('aaaa')
-    assert list(eng.parse('aaaa')) == ['aaaa'], list(eng.parse('aaaa'))
+    assert list(eng.parse('aaaa')) == [['a', ['a', ['a', ['a', '']]]]], list(eng.parse('aaaa'))
 
     simple = Terminal('a') / Terminal('b')
     eng = Engine(simple)
@@ -174,29 +218,37 @@ if __name__ == '__main__':
 
     simple = Terminal('a') + Terminal('b')
     eng = Engine(simple)
-    assert list(eng.parse('ababcc')) == ['ab', 'ab', '<<<cc>>>']
+    assert list(eng.parse('ababcc')) == [['a', 'b'], ['a', 'b'], '<<<cc>>>']
 
     simple = ZeroOrOne(Terminal('a')) + Terminal('b')
     eng = Engine(simple)
-    assert list(eng.parse('abb')) == ['ab', 'b']
+    assert list(eng.parse('abb')) == [['a', 'b'], ['', 'b']]
 
     simple = Terminal('foo') + ~(Terminal('bar'))
     eng = Engine(simple)
-    assert list(eng.parse('foobie')) == ['foo', '<<<bie>>>']
+    assert list(eng.parse('foobie')) == [['foo', ''], '<<<bie>>>']
     assert list(eng.parse('foobar')) == ['<<<foobar>>>']
 
     simple = Terminal('foo') + And(Terminal('bar'))
     eng = Engine(simple)
-    assert list(eng.parse('foobar')) == ['foo', '<<<bar>>>']
+    assert list(eng.parse('foobar')) == [['foo', ''], '<<<bar>>>']
     assert list(eng.parse('foobie')) == ['<<<foobie>>>']
 
     simple = Repeat(Terminal('a') + Terminal('c')) + Terminal('b')
     eng = Engine(simple)
-    assert list(eng.parse('bbacacbbddd')) == ['b', 'b', 'acacb', 'b', '<<<ddd>>>']
+    assert (noempties(flatten(list(eng.parse('bbacacbbddd')))) ==
+            ['b', 'b', 'acacb', 'b', '<<<ddd>>>'], list(eng.parse('bbacacbbddd')))
 
     simple = OneOrMore(Terminal('a') + Terminal('c')) + Terminal('b')
     eng = Engine(simple)
     assert list(eng.parse('bbacacbbddd')) == ['<<<bbacacbbddd>>>']
-    assert list(eng.parse('acacbbddd')) == ['acacb', '<<<bddd>>>']
+    assert (noempties(flatten(list(eng.parse('acacbbddd')))) ==
+           ['a', 'c', 'a', 'c', 'b', '<<<bddd>>>']), list(eng.parse('acacbbddd'))
+
+    simple = Repeat(oneOf('a b c'.split()))
+    assert noempties(flatten(list(simple.match('abc')))) == ['a', 'b', 'c']
+
+    simple = Regex(r'[a-e]+')
+    assert simple.match('acdeaf') == ('acdea', 'f')
 
     print 'assertions pass'
