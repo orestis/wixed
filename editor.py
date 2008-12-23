@@ -64,7 +64,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
                 if isinsert:
                     self.buffer.insert(lineno, col, text, linesadded, self)
                 else:
-                    self.buffer.delete(lineno, col, len(text), linesadded, self)
+                    self.buffer.delete(lineno, col, text, linesadded, self)
             except Exception, e:
                 print e
                 import pdb; pdb.set_trace()
@@ -108,21 +108,11 @@ class FundamentalEditor(stc.StyledTextCtrl):
 
 
     def SyncDeleteFromBuffer(self, event_args):
-        # something is still a bit fishy
-        lineno, col, length, where = event_args
+        lineno, col, text, where = event_args
         if where != self:
             pos = self.FindColumn(lineno, col)
-            endlineno = lineno
-            line_length = len(self.GetLine(endlineno)) - col
+            endpos = pos + len(text.encode('utf-8'))
 
-            endcol = col + length # for single line deletion
-
-            while length > line_length:
-                length -= line_length
-                endcol = length
-                endlineno += 1
-                line_length = len(self.GetLine(endlineno))
-            endpos = self.FindColumn(endlineno, endcol)
             self._just_modified = True
             self.SetTargetStart(pos)
             self.SetTargetEnd(endpos)

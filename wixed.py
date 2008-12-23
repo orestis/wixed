@@ -142,7 +142,7 @@ class Buffer(object):
     def _observe_list(self, method, *args):
         if method == '__setitem__':
             lineno, line = args
-            self.delete(lineno, 0, len(self._lines[lineno]), 0)
+            self.delete(lineno, 0, self._lines[lineno], 0)
             self.insert(lineno, 0, line, 0)
         elif method == '__delslice__':
             start, end = args
@@ -150,8 +150,8 @@ class Buffer(object):
                 end = len(self._lines) - 1
 
             for idx in range(end, start - 1, -1):
-                self.delete(idx, 0, len(self._lines[idx]), -1)
-            self.delete(idx - 1, len(self._lines[idx-1]), 1, -1)
+                self.delete(idx, 0, self._lines[idx], -1)
+            self.delete(idx - 1, len(self._lines[idx-1]), self._lines[idx-1], -1)
         elif method == 'extend':
             iterable = args[0]
             lineno = len(self._lines) - 1
@@ -221,13 +221,14 @@ class Buffer(object):
                 self._lines.insert(i + lineno + 1, line)
 
 
-    def delete(self, lineno, col, length, linesremoved, where=None):
-        self._delete(lineno, col, length, linesremoved, where)
-        self.deleted.fire((lineno, col, length, where))
+    def delete(self, lineno, col, text, linesremoved, where=None):
+        self._delete(lineno, col, text, linesremoved, where)
+        self.deleted.fire((lineno, col, text, where))
 
 
-    def _delete(self, lineno, col, length, linesremoved, where):
+    def _delete(self, lineno, col, text, linesremoved, where):
         self.events.append(('delete', self.text, self._lines, locals()))
+        length = len(text)
         if linesremoved == 0:
             line = self._lines[lineno]
             front, back = line[:col], line[col+length:]

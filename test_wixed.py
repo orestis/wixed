@@ -50,19 +50,19 @@ class testBuffer(object):
         b = Buffer('test')
         b.write('1234567890\n')
 
-        b.delete(0, 0, 1, 0)
+        b.delete(0, 0, '1', 0)
         assert_equal(b.text, '234567890\n')
 
-        b.delete(0, 4, 1, 0)
+        b.delete(0, 4, '6', 0)
         assert_equal(b.text, '23457890\n')
 
-        b.delete(0, 7, 1, 0)
+        b.delete(0, 7, '0', 0)
         assert_equal(b.text, '2345789\n')
 
-        b.delete(0, 3, 2, 0)
+        b.delete(0, 3, '57', 0)
         assert_equal(b.text, '23489\n')
 
-        b.delete(0, 5, 1, -1)
+        b.delete(0, 5, '\n', -1)
         assert_equal(b.text, '23489')
 
 
@@ -70,7 +70,7 @@ class testBuffer(object):
         b = Buffer('test')
         b.write('123\n456\n789\n')
 
-        b.delete(1, 1, 7, -2)
+        b.delete(1, 1, '56\n789\n', -2)
         assert_equal(b.text, '123\n4')
 
 
@@ -78,17 +78,17 @@ class testBuffer(object):
         b = Buffer('test')
         b.write('1234567890\nabcdefghij\nABCDEFGHIJ')
 
-        b.delete(0, 10, 11, -1)
+        b.delete(0, 10, 'abcdefghij\n', -1)
         assert_equal(b.text, '1234567890\nABCDEFGHIJ')
 
-        b.delete(0, 4, 11, -1)
+        b.delete(0, 4, '567890\nABCD', -1)
         assert_equal(b.text, '1234EFGHIJ')
 
 
     def test_delete_all(self):
         b = Buffer('test')
         b.write('a\n')
-        b.delete(0, 0, 2, -1)
+        b.delete(0, 0, 'a\n', -1)
         assert_equal(b.text, '')
         b.insert(0, 0, 'a', 0)
         assert_equal(b.text, 'a')
@@ -100,13 +100,13 @@ class testBuffer(object):
         b.lines.append('asdf')
         assert_equal(b.text, 'asdf\n')
         assert_equal(b.lines, ['asdf', ''])
-        b.delete(0, 0, 4, 0)
+        b.delete(0, 0, 'asdf', 0)
         assert_equal(b.text, '\n')
         assert_equal(b.lines, ['', ''])
         b.insert(0, 0, '\n', 1)
         assert_equal(b.text, '\n\n')
         assert_equal(b.lines, ['', '', ''])
-        b.delete(1, 0, 1, -1)
+        b.delete(1, 0, '\n', -1)
         assert_equal(b.text, '\n')
         assert_equal(b.lines, ['', ''])
 
@@ -132,7 +132,7 @@ class testBuffer(object):
         del arglist[:]
         b.lines[0] = 'new!'
 
-        assert_equal(arglist, [(0, 0, 3, None), (0, 0, 'new!', None)])
+        assert_equal(arglist, [(0, 0, '123', None), (0, 0, 'new!', None)])
 
         del arglist[:]
         copy = b.lines[:]
