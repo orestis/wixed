@@ -108,13 +108,24 @@ class FundamentalEditor(stc.StyledTextCtrl):
 
 
     def SyncDeleteFromBuffer(self, event_args):
+        # something is still a bit fishy
         lineno, col, length, where = event_args
         if where != self:
             pos = self.FindColumn(lineno, col)
+            endlineno = lineno
+            line_length = len(self.GetLine(endlineno)) - col
+
+            endcol = col + length # for single line deletion
+
+            while length > line_length:
+                length -= line_length
+                endcol = length
+                endlineno += 1
+                line_length = len(self.GetLine(endlineno))
+            endpos = self.FindColumn(endlineno, endcol)
             self._just_modified = True
-            #TODO this breaks for unicode - length needs to be bytes
             self.SetTargetStart(pos)
-            self.SetTargetEnd(pos + length)
+            self.SetTargetEnd(endpos)
             self.ReplaceTarget('')
             if DEBUG:
                 assert (self.buffer.text == self.GetText(),
@@ -127,7 +138,6 @@ class FundamentalEditor(stc.StyledTextCtrl):
             pos = self.FindColumn(lineno, col)
             self._just_modified = True
             self._just_modified_pos = True # InsertText invokes UpdateUI on the Mac, not on windows.
-            print pos, text
             self.InsertText(pos, text)
             if DEBUG:
                 assert (self.buffer.text == self.GetText(),
