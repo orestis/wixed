@@ -128,7 +128,7 @@ class ScopeTree(object):
 class Buffer(object):
     def __init__(self, name):
         self.name = name
-        self._lines = ['']
+        self._lines = [u'']
         self._obs_lines = ObservedList(self._lines, self._observe_list)
         self.scope = ScopeTree(self)
         self._curpos = 0
@@ -199,22 +199,23 @@ class Buffer(object):
         self.inserted.fire((lineno, col, text, where))
 
     def _insert(self, lineno, col, text, linesadded, where):
-        #self.events.append(('insert', self.text, self._lines, locals()))
+        self.events.append(('insert', self.text, self._lines, locals()))
+        
         line = self._lines[lineno]
         front, back = line[:col], line[col:]
             
         if linesadded == 0:
-            newline = ''.join([front, text, back])
+            newline = u''.join([front, text, back])
             self._lines[lineno] = newline
         else:
             middle = text.split('\n') # splitlines doesn't return an empty new line
             first, rest = middle[0], middle[1:]
 
-            newline = ''.join([front, first])
+            newline = u''.join([front, first])
             self._lines[lineno] = newline
 
             if back:
-                rest[-1] = ''.join([rest[-1], back])
+                rest[-1] = u''.join([rest[-1], back])
 
             for i, line in enumerate(rest):
                 self._lines.insert(i + lineno + 1, line)
@@ -226,7 +227,7 @@ class Buffer(object):
 
 
     def _delete(self, lineno, col, length, linesremoved, where):
-        #self.events.append(('delete', self.text, self._lines, locals()))
+        self.events.append(('delete', self.text, self._lines, locals()))
         if linesremoved == 0:
             line = self._lines[lineno]
             front, back = line[:col], line[col+length:]
@@ -234,17 +235,17 @@ class Buffer(object):
         else:
             changedlines = self._lines[lineno : lineno + abs(linesremoved) + 1]
             afterlines = self._lines[lineno + abs(linesremoved) + 1:]
-            text = '\n'.join(changedlines)
+            text = u'\n'.join(changedlines)
             front, back = text[:col], text[col+length:]
             newtext = front + back
             newlines = newtext.splitlines()
             if not newlines:
-                newlines.append('')
+                newlines.append(u'')
             del self._lines[lineno:]
             self._lines.extend(newlines)
             self._lines.extend(afterlines)
         if not self._lines:
-            self._lines.append('')
+            self._lines.append(u'')
 
             
 

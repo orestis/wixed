@@ -48,6 +48,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
         b.deleted += self.SyncDeleteFromBuffer
 
     def OnModified(self, event):
+        event.Skip()
         isdelete = event.ModificationType & stc.STC_MOD_DELETETEXT
         isinsert = event.ModificationType & stc.STC_MOD_INSERTTEXT
         if (isinsert or isdelete):
@@ -109,8 +110,9 @@ class FundamentalEditor(stc.StyledTextCtrl):
     def SyncDeleteFromBuffer(self, event_args):
         lineno, col, length, where = event_args
         if where != self:
-            pos = self.PositionFromLine(lineno) + col
+            pos = self.FindColumn(lineno, col)
             self._just_modified = True
+            #TODO this breaks for unicode - length needs to be bytes
             self.SetTargetStart(pos)
             self.SetTargetEnd(pos + length)
             self.ReplaceTarget('')
@@ -122,9 +124,10 @@ class FundamentalEditor(stc.StyledTextCtrl):
     def SyncInsertFromBuffer(self, event_args):
         lineno, col, text, where = event_args
         if where != self:
-            pos = self.PositionFromLine(lineno) + col
+            pos = self.FindColumn(lineno, col)
             self._just_modified = True
             self._just_modified_pos = True # InsertText invokes UpdateUI on the Mac, not on windows.
+            print pos, text
             self.InsertText(pos, text)
             if DEBUG:
                 assert (self.buffer.text == self.GetText(),
@@ -217,6 +220,10 @@ class TextMateStyleEditor(FundamentalEditor):
         # this requests that a line should be restyled
         self.Colourise(start_pos, start_pos + line_length)
 
+    def style(self, start, length, style):
+        self.StartStyling(start, 0x1f)
+        self.SetStyling(length, style)
+
     def OnStyleNeeded(self, event):
         line_number = self.LineFromPosition(self.EndStyled)
         start_pos = self.PositionFromLine(line_number)
@@ -225,10 +232,12 @@ class TextMateStyleEditor(FundamentalEditor):
         if line_length > 0:
             line = self.GetLine(line_number)
             
-            for c in range(len(line)):
-                style = ord(line[c]) % 4
-                self.StartStyling(start_pos + c, 0x1f)
-                self.SetStyling(start_pos + c, self.styles[style])
+            pos = start_pos
+            for c in line:
+                style = ord(c) % 4
+                length = len(c.encode('utf-8'))
+                self.style(pos, length, self.styles[style])
+                pos += length
             
 
 

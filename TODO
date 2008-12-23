@@ -46,3 +46,4 @@
      - it has a dict of scopes -> styles, applies them. More specific wins
      - also display the scope in the status bar or sth like that.
  * Python 2.5 only - I'm sick of 2.4
+ * highlighting breaks unicode
