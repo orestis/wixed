@@ -80,12 +80,15 @@ my
 'nested'
 "string"
 name is orestis 
+\'''
+continues
 '''
 "irellevant"
 "123"
 123
 '''
 """
+# the escaped quote followed by double quotes is not handled
 result, rest = Repeat(grammar).match(source)
 print flatten(result), `rest`
 
