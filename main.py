@@ -164,7 +164,9 @@ class MainWindow(wx.Frame):
         exec(text.replace('\r\n', '\n'), self.context)
 
 
-app = wx.PySimpleApp()
-frame = MainWindow(None, wx.ID_ANY)
+if __name__ == '__main__':
+    app = wx.PySimpleApp()
+    app.AppName = u'Wixed'
+    frame = MainWindow(None, wx.ID_ANY)
 
-app.MainLoop()
+    app.MainLoop()

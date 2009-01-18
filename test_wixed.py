@@ -1,5 +1,6 @@
 import os
 from nose.tools import assert_equal
+from nose import SkipTest
 
 from wixed import Buffer, FileBuffer
 
@@ -164,10 +165,10 @@ class testBuffer(object):
         assert_equal(list(reversed(arglist)), expected)
 
     def test_delete_all(self):
-        assert False, 'not started'
+        raise SkipTest('not started')
 
     def test_set_text(self):
-        assert False, 'not started'
+        raise SkipTest('not started')
 
 def produces_file(filename):
     def _decorator(func):
@@ -186,7 +187,7 @@ def produces_file(filename):
 class testFileBuffer(object):
 
     def test_autosave(self):
-        assert False, 'not started - every X changes, a swap file should be saved'
+        raise SkipTest('not started - every X changes, a swap file should be saved')
         
     @produces_file('testdata/tempfile')
     def test_save(self):
@@ -212,10 +213,10 @@ class testFileBuffer(object):
         assert_equal(b.filepath, 'testdata/samplefile.py')
 
     def test_monitor(self):
-        assert False, 'not started - needs messaging system'
+        raise SkipTest('not started - needs messaging system')
         
     def test_revert(self):
-        assert False, 'not started'
+        raise SkipTest('not started')
         
 
 
