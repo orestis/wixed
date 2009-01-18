@@ -5,7 +5,7 @@ import signal
 import wx
 
 from utils import Pipe, CircleList, EventHook, observed
-from editor import FundamentalEditor, TextMateStyleEditor
+from editor import FundamentalEditor, PythonEditor
 
 class WindowManager(object):
     def __init__(self, parent, onnew):
@@ -35,7 +35,7 @@ class WindowManager(object):
 
     def new(self, buffer):
         try:
-            editor = TextMateStyleEditor(self._parent, wx.NewId(), buffer)
+            editor = PythonEditor(self._parent, wx.NewId(), buffer)
             w = Window(buffer, editor)
             self._eds_to_windows[editor] = w
             self._windows.append(w)
@@ -151,7 +151,6 @@ class Buffer(object):
 
             for idx in range(end, start - 1, -1):
                 self.delete(idx, 0, self._lines[idx], -1)
-            self.delete(idx - 1, len(self._lines[idx-1]), self._lines[idx-1], -1)
         elif method == 'extend':
             iterable = args[0]
             lineno = len(self._lines) - 1

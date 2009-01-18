@@ -1,13 +1,7 @@
-import os
 import sys
-import keyword
 
-import wx
 import wx.aui
-import wx.stc as stc
 
-from PythonCtrl import PythonSTC
-from editor import FundamentalEditor
 from commandline import CommandLineControl
 from wixed import BufferManager, WindowManager
 from utils import Tee

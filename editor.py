@@ -20,7 +20,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
     def __init__(self, parent, ID, buffer):
         stc.StyledTextCtrl.__init__(self, parent, ID, style=wx.BORDER_NONE)
 
-        self._Setup()
+        self._setup()
 
         self._buffer = buffer
         self._just_modified = True
@@ -30,7 +30,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self.Bind(stc.EVT_STC_UPDATEUI, self.UpdateUI)
         self._just_modified = False
         self._just_modified_pos = False
-
+        
 
     def __del__(self):
         if self._buffer is not None:
@@ -134,7 +134,8 @@ class FundamentalEditor(stc.StyledTextCtrl):
                     'buffer is out of sync, last locals where %r' % locals())
 
 
-    def _Setup(self):
+
+    def _setup(self):
         self.CmdKeyAssign(ord('B'), stc.STC_SCMOD_CTRL, stc.STC_CMD_ZOOMIN)
         self.CmdKeyAssign(ord('N'), stc.STC_SCMOD_CTRL, stc.STC_CMD_ZOOMOUT)
 
@@ -171,19 +172,20 @@ class FundamentalEditor(stc.StyledTextCtrl):
             defsize = wx.SystemSettings.GetFont(wx.SYS_ANSI_FIXED_FONT).GetPointSize()
             self.StyleSetSpec(stc.STC_STYLE_DEFAULT, 'fore:#000000,back:#FFFFFF,face:Courier,size:%d'%defsize)
 
+
         # Clear styles and revert to default.
         self.StyleClearAll()
 
         # The rest remains unchanged.
 
         # Line numbers in margin
-        self.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER,'fore:#000000,back:#99A9C2')
+        self.StyleSetSpec(stc.STC_STYLE_LINENUMBER,'fore:#000000,back:#99A9C2')
         # Highlighted brace
-        self.StyleSetSpec(wx.stc.STC_STYLE_BRACELIGHT,'fore:#00009D,back:#FFFF00')
+        self.StyleSetSpec(stc.STC_STYLE_BRACELIGHT,'fore:#00009D,back:#FFFF00')
         # Unmatched brace
-        self.StyleSetSpec(wx.stc.STC_STYLE_BRACEBAD,'fore:#00009D,back:#FF0000')
+        self.StyleSetSpec(stc.STC_STYLE_BRACEBAD,'fore:#00009D,back:#FF0000')
         # Indentation guide
-        self.StyleSetSpec(wx.stc.STC_STYLE_INDENTGUIDE, "fore:#CDCDCD")
+        self.StyleSetSpec(stc.STC_STYLE_INDENTGUIDE, "fore:#CDCDCD")
 
         # Caret color
         self.SetCaretForeground("BLUE")
@@ -192,6 +194,44 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
         
+
+class PythonEditor(FundamentalEditor):
+    def __init__(self, parent, ID, buffer):
+        super(PythonEditor, self).__init__(parent, ID, buffer)
+        self._setup_styles()
+
+
+    def _setup_styles(self):
+        # set lexers - remove this
+        import keyword
+        self.SetLexer(stc.STC_LEX_PYTHON)
+        self.SetKeyWords(0, " ".join(keyword.kwlist))
+
+        # Python styles
+        self.StyleSetSpec(stc.STC_P_DEFAULT, 'fore:#000000')
+        # Comments
+        self.StyleSetSpec(stc.STC_P_COMMENTLINE,  'fore:#008000,back:#F0FFF0')
+        self.StyleSetSpec(stc.STC_P_COMMENTBLOCK, 'fore:#008000,back:#F0FFF0')
+        # Numbers
+        self.StyleSetSpec(stc.STC_P_NUMBER, 'fore:#008080')
+        # Strings and characters
+        self.StyleSetSpec(stc.STC_P_STRING, 'fore:#800080')
+        self.StyleSetSpec(stc.STC_P_CHARACTER, 'fore:#800080')
+        # Keywords
+        self.StyleSetSpec(stc.STC_P_WORD, 'fore:#000080,bold')
+        # Triple quote
+        self.StyleSetSpec(stc.STC_P_TRIPLE, 'fore:#800080,back:#FFFFEA')
+        self.StyleSetSpec(stc.STC_P_TRIPLEDOUBLE, 'fore:#800080,back:#FFFFEA')
+        # Class names
+        self.StyleSetSpec(stc.STC_P_CLASSNAME, 'fore:#0000FF,bold')
+        # Function names
+        self.StyleSetSpec(stc.STC_P_DEFNAME, 'fore:#008080,bold')
+        # Operators
+        self.StyleSetSpec(stc.STC_P_OPERATOR, 'fore:#800000,bold')
+        # Identifiers. I leave this as not bold because everything seems
+        # to be an identifier if it doesn't match the above criterae
+        self.StyleSetSpec(stc.STC_P_IDENTIFIER, 'fore:#000000')
+
 
 # EXPERIMENTS
 STYLE_BLACK = 11

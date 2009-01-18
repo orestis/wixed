@@ -152,14 +152,19 @@ class testBuffer(object):
         previouslines = b.lines[:][1:]
         del arglist[:]
         del b.lines[1:]
-        assert_equal(b.text, 'new!')
-        assert_equal(len(b._lines), 1)
-        assert_equal(len(b.lines), 1)
-        assert_equal(list(reversed(arglist)),
-            [(0, 4, 1, None)] + [(i + 1, 0, len(line), None) for i, line in enumerate(previouslines)])
+        assert_equal(b.text, 'new!\n')
+        assert_equal(len(b._lines), 2)
+        assert_equal(len(b.lines), 2)
+        expected = [
+            (1, 0, 'nice!', None),
+            (2, 0, 'an', None),
+            (3, 0, 'other', None),
+            (4, 0, '', None),
+        ]
+        assert_equal(list(reversed(arglist)), expected)
 
 
-    def test_scopes(self):
+    def tast_scopes(self):
         b = Buffer('test')
 
         s = 's = "Hello, world!"'
