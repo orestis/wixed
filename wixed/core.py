@@ -4,8 +4,8 @@ import signal
 
 import wx
 
-from utils import Pipe, CircleList, EventHook, observed
-from editor import FundamentalEditor, PythonEditor
+from wixed.utils import Pipe, CircleList, EventHook, observed
+from wixed.editor import FundamentalEditor, PythonEditor
 
 class WindowManager(object):
     def __init__(self, parent, onnew):

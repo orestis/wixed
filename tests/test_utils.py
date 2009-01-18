@@ -1,6 +1,6 @@
 from nose.tools import assert_equal
 
-from utils import EventHook
+from wixed.utils import EventHook
 
 class testEventHooks(object):
     def test_add_remove(self):

@@ -1,10 +1,9 @@
 import sys
-
 import wx.aui
 
-from commandline import CommandLineControl
-from wixed import BufferManager, WindowManager
-from utils import Tee
+from wixed.commandline import CommandLineControl
+from wixed.core import BufferManager, WindowManager
+from wixed.utils import Tee
 
 ID_MAINPANEL = wx.NewId()
 
@@ -164,9 +163,4 @@ class MainWindow(wx.Frame):
         exec(text.replace('\r\n', '\n'), self.context)
 
 
-if __name__ == '__main__':
-    app = wx.PySimpleApp()
-    app.AppName = u'Wixed'
-    frame = MainWindow(None, wx.ID_ANY)
 
-    app.MainLoop()
