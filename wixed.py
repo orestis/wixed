@@ -99,38 +99,11 @@ class ObservedList(object):
     __getitem__ = delegate('__getitem__')
 
 
-#from lexers import PythonScanner
-class ScopeTree(object):
-    def __init__(self, buffer):
-        self.buffer = buffer
-
-    def parse(self):
-        self.buffer.read_pos = 0
-        scanner = PythonScanner(self.buffer)
-        self.scope = {}
-        while 1:
-            token, text = scanner.read()
-            print 'token, text', repr(token), repr(text)
-            _, curline, curcol = scanner.position()
-            curline -= 1 # we use 0 based, scanner returns 1 based
-            if token is None:
-                break
-            self.scope[(curcol, curcol + len(text))]= token
-
-    def __getitem__(self, key):
-        line, col = key
-        for (start, end), v  in self.scope.items():
-            if start <= col < end:
-                return v
-        return None
-
-
 class Buffer(object):
     def __init__(self, name):
         self.name = name
         self._lines = [u'']
         self._obs_lines = ObservedList(self._lines, self._observe_list)
-        self.scope = ScopeTree(self)
         self._curpos = 0
         self._anchor = 0
         self.pos_changed = EventHook()
