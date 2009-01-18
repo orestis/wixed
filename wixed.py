@@ -225,6 +225,21 @@ class Buffer(object):
     def __repr__(self):
         return 'Buffer <%r>' % self.name
 
+class FileBuffer(Buffer):
+    def __init__(self, filepath):
+        name = os.path.basename(filepath)
+        super(FileBuffer, self).__init__(name)
+        self.filepath = filepath
+        f = open(filepath)
+        self.write(f.read())
+        f.close()
+
+    def save(self):
+        tempfilepath = self.filepath + '.__wixedsave__'
+        tempfile = open(tempfilepath, 'wb')
+        tempfile.write(self.text)
+        tempfile.close()
+        os.rename(tempfilepath, self.filepath)
 
 
 class BufferManager(object):
@@ -238,13 +253,21 @@ class BufferManager(object):
     def buffers(self):
         return self._buffers
 
-    def new(self, *args, **kwargs):
-        b = Buffer(*args, **kwargs)
+    def _register_buffer(self, b):
         self._buffers.append(b)
         self._bufs_to_indexes[b] = len(self._buffers) - 1
         self._names_to_bufs[b.name] = b
         if self.onnew:
             self.onnew(b)
+
+    def visit(self, *args, **kwargs):
+        b = FileBuffer(*args, **kwargs)
+        self._register_buffer(b)
+        return b
+
+    def new(self, *args, **kwargs):
+        b = Buffer(*args, **kwargs)
+        self._register_buffer(b)
         return b
 
     def __getitem__(self, item):

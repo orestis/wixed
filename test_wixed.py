@@ -1,6 +1,7 @@
+import os
 from nose.tools import assert_equal
 
-from wixed import Buffer
+from wixed import Buffer, FileBuffer
 
 class testBuffer(object):
     def test_insert(self):
@@ -162,6 +163,60 @@ class testBuffer(object):
         ]
         assert_equal(list(reversed(arglist)), expected)
 
+    def test_delete_all(self):
+        assert False, 'not started'
+
+    def test_set_text(self):
+        assert False, 'not started'
+
+def produces_file(filename):
+    def _decorator(func):
+        def _decorated(*args):
+            if os.path.exists(filename):
+                os.remove(filename)
+            try:
+                return func(*args)
+            finally:
+                if os.path.exists(filename):
+                    os.remove(filename)
+        return _decorated
+    return _decorator
+
+
+class testFileBuffer(object):
+
+    def test_autosave(self):
+        assert False, 'not started - every X changes, a swap file should be saved'
+        
+    @produces_file('testdata/tempfile')
+    def test_save(self):
+        tempfile = 'testdata/tempfile'
+        path = 'testdata/samplefile.py'
+        b = FileBuffer(path)
+        b.filepath = tempfile
+        b.write('new text')
+        b.save()
+        contents = open(b.filepath).read()
+        assert_equal(contents, b.text)
+        assert 'new text' in contents, 'new text not added'
+        
+    def test_load(self):
+        path = 'testdata/samplefile.py'
+        b = FileBuffer(path)
+        f = open(path)
+        contents = f.read()
+        f.close()
+
+        assert_equal(b.text, contents)
+        assert_equal(b.name, 'samplefile.py')
+        assert_equal(b.filepath, 'testdata/samplefile.py')
+
+    def test_monitor(self):
+        assert False, 'not started - needs messaging system'
+        
+    def test_revert(self):
+        assert False, 'not started'
+        
 
 
 if __name__ == '__main__':
