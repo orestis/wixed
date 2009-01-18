@@ -5,3 +5,6 @@
 PYSMELLTAGS
 filetags
 tags
+build
+dist
+wixed.egg-info
