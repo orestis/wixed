@@ -1,0 +1,8 @@
+Alias mode:
+python setup.py py2app -A
+
+stdout to terminal:
+./dist/Wixed.app/Contents/MacOS/Wixed
+
+Full mode:
+python setup.py py2app

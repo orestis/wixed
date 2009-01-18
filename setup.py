@@ -20,6 +20,7 @@ if sys.platform == 'darwin':
         app=[mainscript],
         options={'py2app': dict(
             argv_emulation=True,
+            iconfile='wixed.icns',
             plist=PLIST,
         )},
         
