@@ -7,7 +7,7 @@ import time
 
 import wx
 
-from main import MainWindow
+from wixed.main import MainWindow
 
 def mainloop(app):
     app.MainLoop()
