@@ -27,8 +27,8 @@ if sys.platform == 'darwin':
     )
 elif sys.platform == 'win32':
     extra_options = dict(
-         setup_requires=['py2exe'],
-         app=[mainscript],
+       #  setup_requires=['py2exe'],
+       #  app=[mainscript],
      )
 else:
      extra_options = dict(

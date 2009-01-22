@@ -1,5 +1,6 @@
 import wx
 from wx import stc
+from wixed.keybindings import translate, KeyManager
 
 TABWIDTH = 4
 DEBUG = True
@@ -28,6 +29,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self.HookBuffer(self._buffer)
         self.Bind(stc.EVT_STC_MODIFIED, self.OnModified)
         self.Bind(stc.EVT_STC_UPDATEUI, self.UpdateUI)
+        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self._just_modified = False
         self._just_modified_pos = False
         
@@ -46,6 +48,13 @@ class FundamentalEditor(stc.StyledTextCtrl):
         b.pos_changed += self.SyncPosFromBuffer
         b.inserted += self.SyncInsertFromBuffer
         b.deleted += self.SyncDeleteFromBuffer
+
+    def OnKeyDown(self, event):
+        trans = translate(event.KeyCode, event.Modifiers)
+        try:
+            KeyManager[trans]()
+        except KeyError:
+            event.Skip()
 
     def OnModified(self, event):
         event.Skip()
