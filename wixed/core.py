@@ -8,11 +8,12 @@ from wixed.utils import Pipe, CircleList, EventHook, observed
 from wixed.editor import FundamentalEditor, PythonEditor
 
 class WindowManager(object):
-    def __init__(self, parent, onnew):
+    def __init__(self, parent, onnew, session):
         self._windows = []
         self._parent = parent
         self._eds_to_windows = {}
         self.onnew = onnew
+        self.session = session
 
     @property
     def windows(self):
@@ -35,7 +36,7 @@ class WindowManager(object):
 
     def new(self, buffer):
         try:
-            editor = PythonEditor(self._parent, wx.NewId(), buffer)
+            editor = PythonEditor(self._parent, wx.NewId(), buffer, self.session)
             w = Window(buffer, editor)
             self._eds_to_windows[editor] = w
             self._windows.append(w)

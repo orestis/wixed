@@ -1,6 +1,6 @@
 from nose.tools import assert_equal
 
-from wixed.keybindings import translate, _KeyManager
+from wixed.keybindings import translate, KeyMapper
 
 import wx
 
@@ -17,7 +17,7 @@ class testKeybindings(object):
         assert_equal(translate(wx.WXK_TAB, wx.MOD_CONTROL), 'C-<TAB>')
 
     def test_keymap(self):
-        keyman = _KeyManager()
+        keyman = KeyMapper()
         keyman['<A-B>'] = 1
         assert_equal(keyman['<a-b>'], 1)
         

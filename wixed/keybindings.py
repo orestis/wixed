@@ -29,7 +29,7 @@ def translate(keycode, modifiers):
 
     return '%s%s' % (''.join(mods), key)
 
-class _KeyManager(object):
+class KeyMapper(object):
 
     def __init__(self):
         self._mappings = {}
@@ -43,4 +43,3 @@ class _KeyManager(object):
     def clear(self):
         self._mappings = {}
 
-KeyManager = _KeyManager()

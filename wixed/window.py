@@ -1,6 +1,7 @@
 import sys
 import wx.aui
 
+from wixed.session import Session
 from wixed.commandline import CommandLineControl
 from wixed.core import BufferManager, WindowManager
 from wixed.utils import Tee
@@ -12,12 +13,7 @@ class MainWindow(wx.Frame):
         wx.Frame.__init__(self, parent, id, 'title', size=(800, 600))
         self.CreateMenu()
         self.buffers = BufferManager(onnew=self.OnNewBuffer)
-        self.messages_buffer = self.buffers.new('* Messages *')
-        scratch = self.buffers.new('* Scratch *')
-        self.context = {
-            'BUFFERS': self.buffers,
-            'wx': wx, 'MAIN': self,
-        }
+        messages_buffer = self.buffers.new('* Messages *')
 
         mainPanel = wx.Panel(self, wx.ID_ANY)
         mainPanel.SetBackgroundColour(wx.RED)
@@ -28,17 +24,23 @@ class MainWindow(wx.Frame):
             | wx.aui.AUI_NB_TAB_FIXED_WIDTH
         )
         self._nb= wx.aui.AuiNotebook(mainPanel, style=notebookstyle)
-        self.windows = WindowManager(onnew=self.OnNewWindow, parent=self._nb)
+
+        self.session = Session(self.buffers)
+        
+        self.windows = WindowManager(onnew=self.OnNewWindow, parent=self._nb, session=self.session)
+        self.session.windows = self.windows
+
         for b in self.buffers:
             self.windows.new(b)
-        self.context['WINDOWS'] = self.windows
+
         self.current_window_index = self._nb.Selection
         self.CurrentBufferChanged(self.current_window.buffer)
 
-        self.context['NB'] = self._nb
+        #self.context['NB'] = self._nb
         self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.OnPageClose)
-        self.commandLine = CommandLineControl(mainPanel, wx.ID_ANY, size=(125, -1), context=self.context)
+        self.commandLine = CommandLineControl(mainPanel, wx.ID_ANY, size=(125, -1),
+            context=self.session.context)
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(self._nb, proportion=1, flag=wx.EXPAND)
         box.Add(self.commandLine, proportion=0, flag=wx.EXPAND)
@@ -49,26 +51,27 @@ class MainWindow(wx.Frame):
         if len(sys.argv) == 1:
             oldstdout = sys.stdout
             oldstderr = sys.stderr
-            sys.stdout = Tee(oldstdout, self.messages_buffer)
-            sys.stderr = Tee(oldstderr, self.messages_buffer)
+            sys.stdout = Tee(oldstdout, messages_buffer)
+            sys.stderr = Tee(oldstderr, messages_buffer)
 
         self.CreateStatusBar()
 
-        self.Show(True)
-        print >> self.messages_buffer, '# Hello!'
-        print >> self.messages_buffer, '# Use python in the command line below'
-        print >> self.messages_buffer, '# Output goes into this buffer (and in stdout, for post mortems!)'
-        print >> self.messages_buffer, '# B is the current buffer'
-        print >> self.messages_buffer
-        print >> self.messages_buffer, '# You can also eval this buffer'
-        print >> self.messages_buffer, '# Try this:'
-        print >> self.messages_buffer, 'print >> B, "\'Hello world!\'"'
-        print >> self.messages_buffer
-        print >> self.messages_buffer, '# Use BUFFERS.new(name) to create a new buffer'
-        print >> self.messages_buffer, '# import wixed and utils for handy stuff!'
-        print >> self.messages_buffer
+        self.session.init()
 
-        print >> scratch, '# use this buffer to scratch yourself'
+        self.Show(True)
+        print >> messages_buffer, '# Hello!'
+        print >> messages_buffer, '# Use python in the command line below'
+        print >> messages_buffer, '# Output goes into this buffer (and in stdout, for post mortems!)'
+        print >> messages_buffer, '# B is the current buffer'
+        print >> messages_buffer
+        print >> messages_buffer, '# You can also eval this buffer'
+        print >> messages_buffer, '# Try this:'
+        print >> messages_buffer, 'print >> B, "\'Hello world!\'"'
+        print >> messages_buffer
+        print >> messages_buffer, '# Use BUFFERS.new(name) to create a new buffer'
+        print >> messages_buffer, '# import wixed and utils for handy stuff!'
+        print >> messages_buffer
+
 
     @property
     def current_window(self):
@@ -83,7 +86,7 @@ class MainWindow(wx.Frame):
         sel = self._nb.GetSelection()
         self.current_window_index = sel
         self.Title = self.current_window.buffer.name
-        self.context['B'] = self.current_window.buffer
+        self.session.current_buffer = self.current_window.buffer
         event.Skip()
 
     def OnPreviousBuffer(self, _):
@@ -98,7 +101,7 @@ class MainWindow(wx.Frame):
         self.Title = newbuffer.name
         self.current_window.buffer = newbuffer
         self._nb.SetPageText(self.current_window_index, newbuffer.name)
-        self.context['B'] = self.current_window.buffer
+        self.session.current_buffer = self.current_window.buffer
 
     def OnNewBuffer(self, newbuf):
         mb = self.GetMenuBar()
@@ -160,7 +163,7 @@ class MainWindow(wx.Frame):
 
     def OnEvalBuffer(self, e):
         text = self.current_window.buffer.text
-        exec(text.replace('\r\n', '\n'), self.context)
+        exec(text.replace('\r\n', '\n'), self.session.context)
 
 
 

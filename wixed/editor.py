@@ -1,6 +1,6 @@
 import wx
 from wx import stc
-from wixed.keybindings import translate, KeyManager
+from wixed.keybindings import translate
 
 TABWIDTH = 4
 DEBUG = True
@@ -18,13 +18,14 @@ def GetModificationType(mask):
     return actual_masks
 
 class FundamentalEditor(stc.StyledTextCtrl):
-    def __init__(self, parent, ID, buffer):
+    def __init__(self, parent, ID, buffer, session):
         stc.StyledTextCtrl.__init__(self, parent, ID, style=wx.BORDER_NONE)
 
         self._setup()
 
         self._buffer = buffer
         self._just_modified = True
+        self._session = session
         self.SetText(self._buffer.text)
         self.HookBuffer(self._buffer)
         self.Bind(stc.EVT_STC_MODIFIED, self.OnModified)
@@ -51,8 +52,10 @@ class FundamentalEditor(stc.StyledTextCtrl):
 
     def OnKeyDown(self, event):
         trans = translate(event.KeyCode, event.Modifiers)
+        if trans.lower() in ('a-x', 'm-x'):
+            print 'mx'
         try:
-            KeyManager[trans]()
+            self._session.keydown(trans)
         except KeyError:
             event.Skip()
 
@@ -205,8 +208,8 @@ class FundamentalEditor(stc.StyledTextCtrl):
         
 
 class PythonEditor(FundamentalEditor):
-    def __init__(self, parent, ID, buffer):
-        super(PythonEditor, self).__init__(parent, ID, buffer)
+    def __init__(self, *args):
+        super(PythonEditor, self).__init__(*args)
         self._setup_styles()
 
 
