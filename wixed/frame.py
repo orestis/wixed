@@ -1,19 +1,16 @@
-import sys
 import wx.aui
 
-from wixed.session import Session
 from wixed.commandline import CommandLineControl
-from wixed.core import BufferManager, WindowManager
-from wixed.utils import Tee
+from wixed.core import WindowManager
 
 ID_MAINPANEL = wx.NewId()
 
-class MainWindow(wx.Frame):
-    def __init__(self, parent, id):
-        wx.Frame.__init__(self, parent, id, 'title', size=(800, 600))
+class Frame(wx.Frame):
+    def __init__(self, session):
+        wx.Frame.__init__(self, None, wx.ID_ANY, 'title', size=(800, 600))
         self.CreateMenu()
-        self.buffers = BufferManager(onnew=self.OnNewBuffer)
-        messages_buffer = self.buffers.new('* Messages *')
+        self.session = session
+        self.session.buffers.on_new_buffer += self.OnNewBuffer
 
         mainPanel = wx.Panel(self, wx.ID_ANY)
         mainPanel.SetBackgroundColour(wx.RED)
@@ -25,12 +22,11 @@ class MainWindow(wx.Frame):
         )
         self._nb= wx.aui.AuiNotebook(mainPanel, style=notebookstyle)
 
-        self.session = Session(self.buffers)
-        
         self.windows = WindowManager(onnew=self.OnNewWindow, parent=self._nb, session=self.session)
         self.session.windows = self.windows
 
-        for b in self.buffers:
+        for b in session.buffers:
+            self.OnNewBuffer(b)
             self.windows.new(b)
 
         self.current_window_index = self._nb.Selection
@@ -48,29 +44,9 @@ class MainWindow(wx.Frame):
         mainPanel.SetSizer(box)
         mainPanel.SetAutoLayout(True)
 
-        if len(sys.argv) == 1:
-            oldstdout = sys.stdout
-            oldstderr = sys.stderr
-            sys.stdout = Tee(oldstdout, messages_buffer)
-            sys.stderr = Tee(oldstderr, messages_buffer)
-
         self.CreateStatusBar()
 
-        self.session.init()
-
         self.Show(True)
-        print >> messages_buffer, '# Hello!'
-        print >> messages_buffer, '# Use python in the command line below'
-        print >> messages_buffer, '# Output goes into this buffer (and in stdout, for post mortems!)'
-        print >> messages_buffer, '# B is the current buffer'
-        print >> messages_buffer
-        print >> messages_buffer, '# You can also eval this buffer'
-        print >> messages_buffer, '# Try this:'
-        print >> messages_buffer, 'print >> B, "\'Hello world!\'"'
-        print >> messages_buffer
-        print >> messages_buffer, '# Use BUFFERS.new(name) to create a new buffer'
-        print >> messages_buffer, '# import wixed and utils for handy stuff!'
-        print >> messages_buffer
 
 
     @property

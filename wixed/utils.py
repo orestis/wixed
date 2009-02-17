@@ -96,13 +96,10 @@ class EventHook(object):
         self._observers.remove(other)
         return self
 
-    def fire(self, arg=None):
-        if arg is None:
-            for obs in self._observers:
-                obs()
-        else:
-            for obs in self._observers:
-                obs(arg)
+    def fire(self, *args, **kwargs):
+        for obs in self._observers:
+            obs(*args, **kwargs)
+            
 
 def observed(field, event_to_fire):
     def setter(self, val):

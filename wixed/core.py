@@ -244,11 +244,11 @@ class FileBuffer(Buffer):
 
 
 class BufferManager(object):
-    def __init__(self, onnew=None):
+    def __init__(self):
         self._buffers = []
         self._names_to_bufs = {}
         self._bufs_to_indexes = {}
-        self.onnew = onnew
+        self.on_new_buffer = EventHook()
 
     @property
     def buffers(self):
@@ -258,8 +258,7 @@ class BufferManager(object):
         self._buffers.append(b)
         self._bufs_to_indexes[b] = len(self._buffers) - 1
         self._names_to_bufs[b.name] = b
-        if self.onnew:
-            self.onnew(b)
+        self.on_new_buffer.fire(b)
 
     def visit(self, *args, **kwargs):
         b = FileBuffer(*args, **kwargs)
@@ -279,6 +278,9 @@ class BufferManager(object):
 
     def __len__(self):
         return len(self._buffers)
+
+    def __iter__(self):
+        return iter(self._buffers)
 
     def __repr__(self):
         return 'BufferManager: <%r>' % self._buffers

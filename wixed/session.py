@@ -1,28 +1,38 @@
-import os
+from wixed import BufferManager
+from wixed.frame import Frame
+
 from wixed.keybindings import KeyMapper
 
 class Session(object):
+    def __init__(self):
+        self.frames = []
+        self.buffers = BufferManager()
+        self.context = dict(
+            buffers = self.buffers,
+            current_buffer = None,
+            session = self,
+        )
+        self.keymap = KeyMapper()
+        
+    def make_frame(self):
+        f = Frame(self)
+        self.frames.append(f)
+        return f
+
+    def keydown(self, key):
+        command = self.keymap[key]
+        try:
+            command(self)
+        except Exception, e:
+            print e
+        
+
+class _Session(object):
 
     def __init__(self, buffers):
-        self.buffers = buffers
-        self.context = {
-            'buffers': self.buffers,
-            'current_buffer': None,
-            'session': self,
-        }
         self._cur_buf = None
         self._windows = None
         
-        self.keymap = KeyMapper()
-        scratch = self.buffers.new('* Scratch *')
-        print >> scratch, '# use this buffer to scratch yourself'
-
-    def init(self):
-        if os.path.exists('init.py'):
-            try:
-                exec(open('init.py').read(), self.context)
-            except Exception, e:
-                print e
 
     def _set_windows(self, w):
         self._windows = w
@@ -36,14 +46,6 @@ class Session(object):
 
     current_buffer = property(lambda s: s._cur_buf, _set_cur_buf)
 
-    def keydown(self, key):
-        command = self.keymap[key]
-        try:
-            command(self)
-        except Exception, e:
-            print e
-
-        
 
 
 

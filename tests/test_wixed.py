@@ -1,8 +1,19 @@
 import os
 from nose.tools import assert_equal
 from nose import SkipTest
+from mock import Mock
 
-from wixed import Buffer, FileBuffer
+from wixed import Buffer, FileBuffer, BufferManager
+
+class testBufferManager(object):
+    def test_on_new_buffer(self):
+        b = BufferManager()
+        listener = Mock()
+        b.on_new_buffer += listener
+        b.new('TEST BUFFER')
+        assert listener.called
+        assert isinstance(listener.call_args[0][0], Buffer)
+        
 
 class testBuffer(object):
     def test_insert(self):
