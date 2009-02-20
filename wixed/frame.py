@@ -1,7 +1,7 @@
 import wx.aui
 
 from wixed.commandline import CommandLineControl
-from wixed.core import WindowManager
+from wixed.editor import PythonEditor
 
 ID_MAINPANEL = wx.NewId()
 
@@ -22,17 +22,14 @@ class Frame(wx.Frame):
         )
         self._nb= wx.aui.AuiNotebook(mainPanel, style=notebookstyle)
 
-        self.windows = WindowManager(onnew=self.OnNewWindow, parent=self._nb, session=self.session)
-        self.session.windows = self.windows
-
         for b in session.buffers:
             self.OnNewBuffer(b)
-            self.windows.new(b)
+            ed = PythonEditor(self._nb, wx.NewId(), b, session)
+            self._nb.AddPage(ed, b.name)
 
         self.current_window_index = self._nb.Selection
         self.CurrentBufferChanged(self.current_window.buffer)
 
-        #self.context['NB'] = self._nb
         self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.OnPageClose)
         self.commandLine = CommandLineControl(mainPanel, wx.ID_ANY, size=(125, -1),

@@ -1,7 +1,7 @@
 import os
 from nose.tools import assert_equal
 from nose import SkipTest
-from mock import Mock
+from mock import Mock, patch
 
 from wixed import Buffer, FileBuffer, BufferManager
 
@@ -13,7 +13,7 @@ class testBufferManager(object):
         b.new('TEST BUFFER')
         assert listener.called
         assert isinstance(listener.call_args[0][0], Buffer)
-        
+
 
 class testBuffer(object):
     def test_insert(self):

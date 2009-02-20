@@ -39,6 +39,7 @@ class testSession(object):
         s.keymap['a'] = mockCommand = Mock()
         s.keydown('a')
         assert mockCommand.call_args[0][0] == s
+
         
         
         
