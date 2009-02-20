@@ -1,5 +1,5 @@
-from utils import HistoryList
-from wixed import Process
+from wixed.utils import HistoryList, EventHook
+from wixed.core import Process
 
 class CommandDispatcher(object):
     def execute(self, command, context):
@@ -19,6 +19,7 @@ class CommandLineHandler(object):
         self.command = ''
         self.history = HistoryList()
         self.dispatcher = CommandDispatcher()
+        self.execute = EventHook()
 
     def line_changed(self, line):
         if callable(line):
@@ -38,26 +39,17 @@ class CommandLineHandler(object):
         finally:
             self.command = self.history.current
 
-    def execute(self, context):
+    def finish(self):
         if self.command == '':
             return
         self.history.append(self.command)
-        if self.command.startswith(':'):
-            self.dispatcher.execute(self.command[1:], context)
-            return
+        self.execute.fire(self.command)
 
-        self.history.append(self.command)
-        try:
-            exec(self.command, context)
-        except Exception, e:
-            print e
 
 
 import wx
 class CommandLineControl(wx.TextCtrl):
     def __init__(self, *args, **kwargs):
-        self.context = kwargs.pop('context')
-        self.context['CMD'] = self
         style = kwargs.get('style', 0)
         style |= wx.TE_PROCESS_ENTER | wx.TE_PROCESS_TAB | wx.TE_RICH2 # TE_RICH2 for windows
         kwargs ['style'] = style
@@ -73,6 +65,7 @@ class CommandLineControl(wx.TextCtrl):
         style.SetFont(font)
         self.style = style
         self.SetDefaultStyle(style)
+        self.unfocus = EventHook()
 
     def Flash(self):
         wx.Bell()
@@ -84,7 +77,7 @@ class CommandLineControl(wx.TextCtrl):
     def OnKeyDown(self, event):
         key = event.GetKeyCode()
         if key in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
-            self.handler.execute(self.context)
+            self.handler.finish()
             self.ChangeValue('')
         elif key == wx.WXK_DOWN:
             try:
@@ -105,6 +98,7 @@ class CommandLineControl(wx.TextCtrl):
         elif key == wx.WXK_ESCAPE:
             self.handler.line_changed('')
             self.ChangeValue('')
+            self.unfocus.fire()
         else:
             event.Skip()
             wx.CallAfter(self.handler.line_changed, self.GetValue)

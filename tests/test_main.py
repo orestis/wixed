@@ -66,8 +66,10 @@ class MainThread(threading.Thread):
 
 class GUITest(object):
     start_app = True
-    def setup(self):
+    def __init__(self):
         self.events = UIEventSimulator()
+
+    def setup(self):
         if self.start_app:
             self.launch()
 
@@ -88,22 +90,31 @@ class GUITest(object):
     def get_notebook(self):
         return self.frame._nb
 
-    def select_tab_with_title(self, title):
+    def select_tab(self, title):
+        nb = self.get_notebook()
+        i = self._nb_title_to_index(title)
+        wx.CallAfter(lambda: nb.SetSelection(i))
+        time.sleep(0.2)
+
+    def _nb_title_to_index(self, title):
         nb = self.get_notebook()
         page_count = nb.GetPageCount()
         for i in range(page_count):
             if nb.GetPageText(i) == title:
-                wx.CallAfter(lambda: nb.SetSelection(i))
-                time.sleep(0.2)
-                break
+                return i
 
-    def send_keys(self, keys):
+    def get_tab(self, title):
+        return self.get_notebook().GetPage(self._nb_title_to_index(title))
+
+
+    def send_keys(self, keys, shift=False, cmd=False, alt=False):
         for key in keys:
-            self.events.KeyChar(_keys_to_codes[key])
+            self.events.KeyChar(_keys_to_codes[key], shift, cmd, alt)
         time.sleep(0.2)
 
 
 class testMain(GUITest):
+    GUI = True
 
     def test_startup(self):
         # When wixed starts, a frame appears
@@ -112,19 +123,42 @@ class testMain(GUITest):
 
         # there is also another tab, called * Scratch *
         nb = self.get_notebook()
+        assert_equal(nb.GetPageText(0), '* Messages *')
         assert_equal(nb.GetPageText(1), '* Scratch *')
 
+        # the first tab has keyboard focus
+
+        assert_equal(self.frame.FindFocus(), nb.GetPage(0))
+
         # clicking on the tab changes the title
-        self.select_tab_with_title('* Scratch *')
+        self.select_tab('* Scratch *')
         assert_equal(self.frame.Title, '* Scratch *')
-        self.select_tab_with_title('* Messages *')
+        self.select_tab('* Messages *')
         assert_equal(self.frame.Title, '* Messages *')
 
         # typing something in the scratch buffer produces some text
-        self.select_tab_with_title('* Scratch *')
+        self.select_tab('* Scratch *')
         # abc in mac way - need to implement that in eventsim
         self.send_keys('abc')
 
         scratch = self.session.buffers['* Scratch *']
         assert 'abc' in scratch.text
+
+    def test_commandline(self):
+        # hitting m-x should focus commandline
+        cmdLine = self.frame.commandLine
+        self.select_tab('* Scratch *')
+        assert cmdLine != cmdLine.FindFocus(), 'should not have focus by default'
+        self.send_keys('x', cmd=True)
+        assert cmdLine == cmdLine.FindFocus() 
+
+        self.send_keys("print 'commandline'\r")
+        messages = self.session.buffers['* Messages *']
+        assert 'commandline' in messages.text
+
+        self.send_keys('\x1b') # ESC
+        assert_equal(self.frame.FindFocus(), self.get_tab('* Scratch *'))
+
+
+
 

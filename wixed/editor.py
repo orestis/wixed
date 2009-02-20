@@ -52,8 +52,6 @@ class FundamentalEditor(stc.StyledTextCtrl):
 
     def OnKeyDown(self, event):
         trans = translate(event.KeyCode, event.Modifiers)
-        if trans.lower() in ('a-x', 'm-x'):
-            print 'mx'
         try:
             self._session.keydown(trans)
         except KeyError:

@@ -4,11 +4,11 @@ import sys
 from wixed.session import Session
 from wixed.utils import Tee
 
-def init_session():
+def init_session(redirect=True):
     s = Session()
     messages_buffer = s.buffers.new('* Messages *')
     scratch_buffer = s.buffers.new('* Scratch *')
-    if len(sys.argv) == 1:
+    if redirect:
         oldstdout = sys.stdout
         oldstderr = sys.stderr
         sys.stdout = Tee(oldstdout, messages_buffer)
@@ -34,7 +34,10 @@ if __name__ == '__main__':
     app = wx.PySimpleApp()
     app.AppName = u'Wixed'
 
-    s = init_session()
+    redirect = True
+    if len(sys.argv) == 1:
+        redirect = False
+    s = init_session(redirect)
 
     s.make_frame()
     app.MainLoop()

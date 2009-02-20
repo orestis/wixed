@@ -26,6 +26,12 @@ class Session(object):
         except Exception, e:
             print e
         
+    def execute(self, statement):
+        try:
+            exec(statement, self.context)
+        except Exception, e:
+            print e
+
 
 class _Session(object):
 
