@@ -18,7 +18,6 @@ class CommandLineHandler(object):
     def __init__(self):
         self.command = ''
         self.history = HistoryList()
-        self.dispatcher = CommandDispatcher()
         self.execute = EventHook()
 
     def line_changed(self, line):

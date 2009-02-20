@@ -18,14 +18,14 @@ def GetModificationType(mask):
     return actual_masks
 
 class FundamentalEditor(stc.StyledTextCtrl):
-    def __init__(self, parent, ID, buffer, session):
+    def __init__(self, parent, ID, buffer, keydown):
         stc.StyledTextCtrl.__init__(self, parent, ID, style=wx.BORDER_NONE)
 
         self._setup()
 
         self._buffer = buffer
         self._just_modified = True
-        self._session = session
+        self._keydown = keydown
         self.SetText(self._buffer.text)
         self.HookBuffer(self._buffer)
         self.Bind(stc.EVT_STC_MODIFIED, self.OnModified)
@@ -53,7 +53,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
     def OnKeyDown(self, event):
         trans = translate(event.KeyCode, event.Modifiers)
         try:
-            self._session.keydown(trans)
+            self._keydown(trans)
         except KeyError:
             event.Skip()
 

@@ -42,7 +42,7 @@ class Frame(wx.Frame):
 
         for b in session.buffers:
             self.OnNewBuffer(b)
-            ed = PythonEditor(self._nb, wx.NewId(), b, session)
+            ed = PythonEditor(self._nb, wx.NewId(), b, session.keydown)
             self._nb.AddPage(ed, b.name)
 
         self.current_window_index = self._nb.Selection

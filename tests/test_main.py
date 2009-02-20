@@ -27,9 +27,6 @@ _keys_to_codes = {
     105, u'\u016e': 116, u'\u016f': 121
 }
 
-def mainloop(app):
-    app.MainLoop()
-
 class MainThread(threading.Thread):
     def __init__(self, autoStart=True):
         threading.Thread.__init__(self)
@@ -127,7 +124,6 @@ class testMain(GUITest):
         assert_equal(nb.GetPageText(1), '* Scratch *')
 
         # the first tab has keyboard focus
-
         assert_equal(self.frame.FindFocus(), nb.GetPage(0))
 
         # clicking on the tab changes the title
@@ -138,7 +134,6 @@ class testMain(GUITest):
 
         # typing something in the scratch buffer produces some text
         self.select_tab('* Scratch *')
-        # abc in mac way - need to implement that in eventsim
         self.send_keys('abc')
 
         scratch = self.session.buffers['* Scratch *']
@@ -150,7 +145,7 @@ class testMain(GUITest):
         self.select_tab('* Scratch *')
         assert cmdLine != cmdLine.FindFocus(), 'should not have focus by default'
         self.send_keys('x', cmd=True)
-        assert cmdLine == cmdLine.FindFocus() 
+        assert cmdLine == cmdLine.FindFocus()
 
         self.send_keys("print 'commandline'\r")
         messages = self.session.buffers['* Messages *']
@@ -158,6 +153,8 @@ class testMain(GUITest):
 
         self.send_keys('\x1b') # ESC
         assert_equal(self.frame.FindFocus(), self.get_tab('* Scratch *'))
+
+
 
 
 

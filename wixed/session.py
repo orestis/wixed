@@ -33,26 +33,4 @@ class Session(object):
             print e
 
 
-class _Session(object):
-
-    def __init__(self, buffers):
-        self._cur_buf = None
-        self._windows = None
-        
-
-    def _set_windows(self, w):
-        self._windows = w
-        self.context['windows'] = self._windows
-
-    windows = property(lambda s: s._windows, _set_windows)
-
-    def _set_cur_buf(self, b):
-        self._cur_buf = b
-        self.context['current_buffer'] = self._cur_buf
-
-    current_buffer = property(lambda s: s._cur_buf, _set_cur_buf)
-
-
-
-
 
