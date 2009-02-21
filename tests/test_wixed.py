@@ -9,7 +9,7 @@ class testBufferManager(object):
     def test_on_new_buffer(self):
         b = BufferManager()
         listener = Mock()
-        b.on_new_buffer += listener
+        b.buffer_created += listener
         b.new('TEST BUFFER')
         assert listener.called
         assert isinstance(listener.call_args[0][0], Buffer)

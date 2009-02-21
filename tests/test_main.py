@@ -117,6 +117,7 @@ class testMain(GUITest):
         # When wixed starts, a frame appears
         # When wixed starts up, the title is * Messages *
         assert_equal(self.frame.Title, '* Messages *')
+        assert_equal(self.session.current_buffer.name, '* Messages *')
 
         # there is also another tab, called * Scratch *
         nb = self.get_notebook()
@@ -129,8 +130,10 @@ class testMain(GUITest):
         # clicking on the tab changes the title
         self.select_tab('* Scratch *')
         assert_equal(self.frame.Title, '* Scratch *')
+        assert_equal(self.session.current_buffer.name, '* Scratch *')
         self.select_tab('* Messages *')
         assert_equal(self.frame.Title, '* Messages *')
+        assert_equal(self.session.current_buffer.name, '* Messages *')
 
         # typing something in the scratch buffer produces some text
         self.select_tab('* Scratch *')

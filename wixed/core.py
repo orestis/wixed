@@ -196,7 +196,7 @@ class BufferManager(object):
         self._buffers = []
         self._names_to_bufs = {}
         self._bufs_to_indexes = {}
-        self.on_new_buffer = EventHook()
+        self.buffer_created = EventHook()
 
     @property
     def buffers(self):
@@ -206,7 +206,7 @@ class BufferManager(object):
         self._buffers.append(b)
         self._bufs_to_indexes[b] = len(self._buffers) - 1
         self._names_to_bufs[b.name] = b
-        self.on_new_buffer.fire(b)
+        self.buffer_created.fire(b)
 
     def visit(self, *args, **kwargs):
         b = FileBuffer(*args, **kwargs)

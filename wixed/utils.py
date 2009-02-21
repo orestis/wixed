@@ -100,6 +100,10 @@ class EventHook(object):
         for obs in self._observers:
             obs(*args, **kwargs)
             
+    @property
+    def observers(self):
+        return self._observers[:]
+
 
 def observed(field, event_to_fire):
     def setter(self, val):

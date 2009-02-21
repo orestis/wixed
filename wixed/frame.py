@@ -2,6 +2,7 @@ import wx.aui
 
 from wixed.commandline import CommandLineControl
 from wixed.editor import PythonEditor
+from wixed.utils import EventHook
 
 ID_MAINPANEL = wx.NewId()
 
@@ -38,7 +39,8 @@ class Frame(wx.Frame):
         self.session = session
         self._setup()
 
-        self.session.buffers.on_new_buffer += self.OnNewBuffer
+        self.buffer_changed = EventHook()
+        self.session.buffers.buffer_created += self.OnNewBuffer
 
         for b in session.buffers:
             self.OnNewBuffer(b)
@@ -68,7 +70,7 @@ class Frame(wx.Frame):
         sel = self._nb.GetSelection()
         self.current_window_index = sel
         self.Title = self.current_window.buffer.name
-        self.session.current_buffer = self.current_window.buffer
+        self.buffer_changed.fire(self.current_window.buffer)
         event.Skip()
 
     def OnPreviousBuffer(self, _):
@@ -83,8 +85,8 @@ class Frame(wx.Frame):
         self.Title = newbuffer.name
         self.current_window.buffer = newbuffer
         self._nb.SetPageText(self.current_window_index, newbuffer.name)
-        self.session.current_buffer = self.current_window.buffer
         self.current_window.SetFocus()
+        self.buffer_changed.fire(newbuffer)
 
     def OnNewBuffer(self, newbuf):
         mb = self.GetMenuBar()
