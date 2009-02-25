@@ -176,7 +176,8 @@ class testMain(GUITest):
         wait_for(lambda: self.frame.FindFocus() == self.get_tab('* Scratch *'))
 
 
-
+    def test_shared_menubar(self):
+        assert False, 'NEXT'
 
 
 
