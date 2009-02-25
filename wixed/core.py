@@ -112,8 +112,8 @@ class Buffer(object):
         self.scroll_to_end()
 
     def scroll_to_end(self):
-        self._anchor = -1
-        self.curpos = -1
+        self._anchor = len(self.text)
+        self.curpos = len(self.text)
 
     def insert(self, lineno, col, text, linesadded, where=None):
         self._insert(lineno, col, text, linesadded, where)

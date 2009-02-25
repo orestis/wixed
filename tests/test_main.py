@@ -9,6 +9,8 @@ import wx
 
 from wixed.main import init_session
 
+from testutils import wait_for
+
 sys.path.append('Lib') # also needs to have libeventsim.dylib _directly_ on the root.
 from eventsim import UIEventSimulator
 
@@ -27,6 +29,16 @@ _keys_to_codes = {
     105, u'\u016e': 116, u'\u016f': 121
 }
 
+_shifted_keys = {
+    '>': '.',
+    '<': ',',
+    ':': ';',
+    '"': '\'',
+    '{': '[',
+    '}': ']',
+    '_': '-',
+}
+
 class MainThread(threading.Thread):
     def __init__(self, autoStart=True):
         threading.Thread.__init__(self)
@@ -42,7 +54,7 @@ class MainThread(threading.Thread):
 
     def run(self):
         app = wx.PySimpleApp()
-        s = init_session()
+        s = init_session(False)
         f = s.make_frame()
  
         #define frame and release lock
@@ -137,10 +149,12 @@ class testMain(GUITest):
 
         # typing something in the scratch buffer produces some text
         self.select_tab('* Scratch *')
+        scratch = self.session.buffers['* Scratch *']
+        assert_equal(scratch.curpos, len(scratch.text))
         self.send_keys('abc')
 
-        scratch = self.session.buffers['* Scratch *']
-        assert 'abc' in scratch.text
+        assert scratch.text.strip().endswith('abc')
+
 
     def test_commandline(self):
         # hitting m-x should focus commandline
@@ -148,14 +162,18 @@ class testMain(GUITest):
         self.select_tab('* Scratch *')
         assert cmdLine != cmdLine.FindFocus(), 'should not have focus by default'
         self.send_keys('x', cmd=True)
-        assert cmdLine == cmdLine.FindFocus()
+        wait_for(lambda: cmdLine == cmdLine.FindFocus(), msg='cmd line didnot get focus')
 
-        self.send_keys("print 'commandline'\r")
+        cmd = "print >> session.buffers['* Messages *'], 'commandline"
+        cmdLine.ChangeValue(cmd)
+        cmdLine.SetInsertionPoint(len(cmd))
+
+        self.send_keys('\'\r')
         messages = self.session.buffers['* Messages *']
-        assert 'commandline' in messages.text
+        wait_for(lambda: messages.text.strip().endswith('commandline'), msg=messages.text)
 
         self.send_keys('\x1b') # ESC
-        assert_equal(self.frame.FindFocus(), self.get_tab('* Scratch *'))
+        wait_for(lambda: self.frame.FindFocus() == self.get_tab('* Scratch *'))
 
 
 

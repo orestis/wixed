@@ -50,6 +50,8 @@ class testBuffer(object):
         b = Buffer('test')
         b.write('123')
         assert_equal(b.text, '123')
+        assert_equal(b.curpos, 3)
+        assert_equal(b.anchor, 3)
 
         b.write('456\n\n789\n000')
         assert_equal(b.text, '123456\n\n789\n000')

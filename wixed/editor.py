@@ -28,6 +28,7 @@ class FundamentalEditor(stc.StyledTextCtrl):
         self._keydown = keydown
         self.SetText(self._buffer.text)
         self.HookBuffer(self._buffer)
+        self.SyncPosFromBuffer()
         self.Bind(stc.EVT_STC_MODIFIED, self.OnModified)
         self.Bind(stc.EVT_STC_UPDATEUI, self.UpdateUI)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
